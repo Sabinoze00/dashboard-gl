@@ -1,12 +1,24 @@
 'use client';
 
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, Title, Tooltip, Legend, PointElement } from 'chart.js';
+import { 
+  Chart as ChartJS, 
+  CategoryScale, 
+  LinearScale, 
+  BarElement, 
+  BarController,
+  LineElement, 
+  LineController,
+  Title, 
+  Tooltip, 
+  Legend, 
+  PointElement 
+} from 'chart.js';
 import { Chart } from 'react-chartjs-2';
 import { useState } from 'react';
 import { ObjectiveWithValues, ObjectiveType } from '@/lib/types';
 import { formatNumber } from '@/lib/formatters';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, Title, Tooltip, Legend, PointElement);
+ChartJS.register(CategoryScale, LinearScale, BarElement, BarController, LineElement, LineController, Title, Tooltip, Legend, PointElement);
 
 interface ObjectiveChartProps {
   objective: ObjectiveWithValues;
