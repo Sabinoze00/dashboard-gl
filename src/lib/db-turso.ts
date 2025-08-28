@@ -1,8 +1,12 @@
 import { createClient } from '@libsql/client';
 
 // Database configuration for Turso
-const tursoUrl = process.env.TURSO_DATABASE_URL!;
-const tursoAuthToken = process.env.TURSO_AUTH_TOKEN!;
+const tursoUrl = process.env.TURSO_DATABASE_URL || 'libsql://dashboard-gl-sabinoze00.aws-eu-west-1.turso.io';
+const tursoAuthToken = process.env.TURSO_AUTH_TOKEN || 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NTYzOTYxNTAsImlkIjoiYWZhOTRjNGYtNTYwOS00MDA5LTkzYTUtZTQyM2JiYTM5OTA0IiwicmlkIjoiMDJjMmIwNDctNmJkYS00ZmIxLWE0NDYtMmMxODc4MGM0MjgxIn0.JZqzKq92Yhp8_E7D9JSmp4Vds9r3adZHZQe3HsgUjf2AATFgqEgRm9CkefFYIMasi6tg9LKtoPr5sx26d71_Ag';
+
+console.log('🚀 Turso config:');
+console.log('URL:', tursoUrl);
+console.log('Token exists:', !!tursoAuthToken);
 
 // Create Turso client
 const db = createClient({

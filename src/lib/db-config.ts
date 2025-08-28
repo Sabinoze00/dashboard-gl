@@ -3,7 +3,8 @@ import * as sqliteDb from './db';
 import * as tursoDb from './db-turso';
 
 const isProduction = process.env.NODE_ENV === 'production';
-const useTurso = process.env.USE_TURSO === 'true' || isProduction;
+// Force Turso usage in production
+const useTurso = true; // Always use Turso
 
 // Debug logging
 console.log('🔧 Database config debug:');
