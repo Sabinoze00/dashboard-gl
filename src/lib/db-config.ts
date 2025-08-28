@@ -5,6 +5,15 @@ import * as tursoDb from './db-turso';
 const isProduction = process.env.NODE_ENV === 'production';
 const useTurso = process.env.USE_TURSO === 'true' || isProduction;
 
+// Debug logging
+console.log('🔧 Database config debug:');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('USE_TURSO:', process.env.USE_TURSO);
+console.log('isProduction:', isProduction);
+console.log('useTurso:', useTurso);
+console.log('TURSO_DATABASE_URL exists:', !!process.env.TURSO_DATABASE_URL);
+console.log('TURSO_AUTH_TOKEN exists:', !!process.env.TURSO_AUTH_TOKEN);
+
 // Export database type indicator
 export const DATABASE_TYPE = useTurso ? 'turso' : 'sqlite';
 export const IS_USING_TURSO = useTurso;
