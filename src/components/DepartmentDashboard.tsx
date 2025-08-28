@@ -11,6 +11,8 @@ import ObjectiveChart from './ObjectiveChart';
 import AdvancedGrid from './AdvancedGrid';
 import AddObjectiveForm from './AddObjectiveForm';
 import BulkObjectiveForm from './BulkObjectiveForm';
+import PeriodSelector, { PeriodSelection } from './PeriodSelector';
+import { filterObjectivesByPeriod, calculateCurrentValueForPeriod, calculateProgressForPeriod } from '@/lib/period-filter';
 import {
   DndContext,
   closestCenter,
@@ -38,6 +40,11 @@ export default function DepartmentDashboard({ department }: DepartmentDashboardP
   const [activeView, setActiveView] = useState<'overview' | 'grid'>('overview');
   const [showAddForm, setShowAddForm] = useState(false);
   const [showBulkForm, setShowBulkForm] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodSelection>({
+    startMonth: 1,
+    endMonth: new Date().getMonth() + 1, // Current month
+    year: new Date().getFullYear()
+  });
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -175,6 +182,9 @@ export default function DepartmentDashboard({ department }: DepartmentDashboardP
     fetchObjectives();
   }, [fetchObjectives]);
 
+  // Filter objectives based on selected period
+  const filteredObjectives = filterObjectivesByPeriod(objectives, selectedPeriod);
+
   const getDepartmentColor = () => {
     const colors = {
       'Grafico': 'bg-blue-500',
@@ -237,9 +247,18 @@ export default function DepartmentDashboard({ department }: DepartmentDashboardP
                   Dashboard {department}
                 </h1>
                 <p className="text-gray-600">
-                  {objectives.length} obiettivi attivi
+                  {filteredObjectives.length} obiettivi nel periodo selezionato
                 </p>
               </div>
+            </div>
+
+            {/* Period Selector */}
+            <div className="flex items-center space-x-4">
+              <PeriodSelector
+                selectedPeriod={selectedPeriod}
+                onPeriodChange={setSelectedPeriod}
+                className="hidden sm:block"
+              />
             </div>
             
             <div className="flex space-x-3">
@@ -296,7 +315,7 @@ export default function DepartmentDashboard({ department }: DepartmentDashboardP
             onDragEnd={handleDragEnd}
           >
             {/* Score Cards */}
-            {objectives.length > 0 && (
+            {filteredObjectives.length > 0 && (
               <section className="mb-12">
                 <div className="flex items-center justify-between mb-8">
                   <h2 className="text-2xl font-bold text-gray-900">Score Cards</h2>
@@ -304,9 +323,9 @@ export default function DepartmentDashboard({ department }: DepartmentDashboardP
                     🔄 Trascina le card per riordinarle
                   </div>
                 </div>
-                <SortableContext items={objectives.map(obj => obj.id.toString())} strategy={rectSortingStrategy}>
+                <SortableContext items={filteredObjectives.map(obj => obj.id.toString())} strategy={rectSortingStrategy}>
                   <div className="grid grid-cols-fluid-320 gap-8 max-w-none">
-                    {objectives.map((objective) => (
+                    {filteredObjectives.map((objective) => (
                       <DraggableScoreCard 
                         key={objective.id} 
                         objective={objective} 
@@ -319,11 +338,11 @@ export default function DepartmentDashboard({ department }: DepartmentDashboardP
             )}
 
             {/* Charts */}
-            {objectives.length > 0 && (
+            {filteredObjectives.length > 0 && (
               <section className="mb-12">
                 <h2 className="text-2xl font-bold text-gray-900 mb-8">Grafici Andamento</h2>
                 <div className="grid grid-cols-fluid-480 gap-8 max-w-none">
-                  {objectives.map((objective) => (
+                  {filteredObjectives.map((objective) => (
                     <ObjectiveChart key={objective.id} objective={objective} />
                   ))}
                 </div>
@@ -334,7 +353,7 @@ export default function DepartmentDashboard({ department }: DepartmentDashboardP
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Griglia Editing Avanzata</h2>
             <AdvancedGrid
-              objectives={objectives}
+              objectives={filteredObjectives}
               department={department}
               onValueUpdate={handleValueUpdate}
               onObjectiveUpdate={handleObjectiveUpdate}
