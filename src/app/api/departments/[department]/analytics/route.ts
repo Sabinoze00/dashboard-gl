@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getEnrichedObjectivesByDepartment } from '@/lib/db-config';
+import { getEnrichedObjectivesByDepartment } from '@/lib/db-turso';
 import { Department } from '@/lib/types';
 
 export async function GET(

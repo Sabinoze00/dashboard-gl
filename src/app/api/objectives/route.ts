@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createObjective } from '@/lib/db-config';
+import { createObjective } from '@/lib/db-turso';
 
 export async function POST(request: NextRequest) {
   try {

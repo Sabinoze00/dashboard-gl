@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getObjectiveValues, updateObjectiveValue } from '@/lib/db-config';
+import { getObjectiveValues, updateObjectiveValue } from '@/lib/db-turso';
 
 export async function GET(
   request: NextRequest,

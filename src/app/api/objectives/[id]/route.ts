@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { deleteObjective } from '@/lib/db-config';
+import { deleteObjective } from '@/lib/db-turso';
 import { updateObjective } from '@/lib/db-update-functions';
 
 export async function PUT(

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { deleteObjectives } from '@/lib/db-config';
+import { deleteObjectives } from '@/lib/db-turso';
 
 export async function DELETE(request: NextRequest) {
   try {
