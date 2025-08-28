@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getObjectivesByDepartment } from '@/lib/db-config';
+import { getObjectivesByDepartment } from '@/lib/db-turso'; // Force Turso
 import { Department } from '@/lib/types';
 
 export async function GET(
