@@ -51,7 +51,8 @@ export default function BulkObjectiveForm({ department, onObjectivesAdded, onCan
       target_numeric: '',
       number_format: 'number',
       start_date: '2025-01-01',
-      end_date: '2025-12-31'
+      end_date: '2025-12-31',
+      reverse_logic: false
     }]);
   };
 
