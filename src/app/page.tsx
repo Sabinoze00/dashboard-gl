@@ -1,100 +1,109 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import Link from 'next/link';
+import Image from 'next/image';
+
+const departments = [
+  { name: 'Grafico', href: '/grafico' },
+  { name: 'Sales', href: '/sales' },
+  { name: 'Financial', href: '/financial' },
+  { name: 'Agency', href: '/agency' },
+  { name: 'PM Company', href: '/pm-company' },
+  { name: 'Marketing', href: '/marketing' }
+];
+
+// Function to get department image path
+const getDepartmentImage = (deptName: string): string => {
+  const imageMap: { [key: string]: string } = {
+    'Grafico': '/departments/Grafico.png',
+    'Sales': '/departments/Sales.png',
+    'Financial': '/departments/Financial.png',
+    'Agency': '/departments/Agency.png',
+    'PM Company': '/departments/PmCompany.png',
+    'Marketing': '/departments/Marketing.png'
+  };
+  return imageMap[deptName] || '';
+};
+
+export default function HomePage() {
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-brand-background">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-8">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900">
+                Dashboard Obiettivi GrowthLabb
+              </h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="px-4 py-2 rounded-xl text-sm font-semibold bg-green-50 text-green-700">
+                ✓ Database Attivo
+              </div>
+            </div>
+          </div>
         </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center mb-12">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            Seleziona un Reparto
+          </h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Visualizza e gestisci gli obiettivi per ciascun Reparto.
+          </p>
+        </div>
+
+        {/* Department Grid */}
+        <div className="grid grid-cols-fluid-320 gap-8 max-w-none">
+          {departments.map((dept) => (
+            <Link
+              key={dept.name}
+              href={dept.href}
+              className="group bg-white rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 border border-gray-100 hover:border-gray-200 p-8"
+            >
+              <div className="flex items-center space-x-5">
+                <div className="w-16 h-16 group-hover:scale-105 transition-transform duration-200">
+                  <Image
+                    src={getDepartmentImage(dept.name)}
+                    alt={`Logo ${dept.name}`}
+                    width={64}
+                    height={64}
+                    className="w-full h-full object-contain rounded-2xl shadow-lg"
+                    priority
+                  />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-brand-primary transition-colors duration-200">
+                    {dept.name}
+                  </h3>
+                  <p className="text-base text-brand-text mt-2 font-medium">
+                    Visualizza obiettivi
+                  </p>
+                </div>
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <svg className="w-6 h-6 text-brand-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-200 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center text-gray-500 text-sm">
+            <p className="mt-1">From Bino with ❤️</p>
+          </div>
+        </div>
       </footer>
     </div>
   );

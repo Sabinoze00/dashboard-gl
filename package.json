@@ -4,23 +4,38 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:turso": "USE_TURSO=true npm run dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed": "curl -X POST http://localhost:3000/api/seed",
+    "setup": "npm install && npm run dev",
+    "init-turso": "INIT_TURSO_DB=true USE_TURSO=true node -e \"require('./src/lib/db-turso.ts')\""
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@libsql/client": "^0.15.14",
+    "ag-grid-community": "^34.1.2",
+    "ag-grid-react": "^34.1.2",
+    "better-sqlite3": "^12.2.0",
+    "chart.js": "^4.5.0",
+    "dotenv": "^17.2.1",
+    "next": "14.2.32",
     "react": "^18",
+    "react-chartjs-2": "^5.3.0",
     "react-dom": "^18",
-    "next": "14.2.32"
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.32",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.32"
+    "typescript": "^5"
   }
 }

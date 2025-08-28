@@ -27,6 +27,12 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env
+
+# database files
+database.sqlite
+database.sqlite-journal
+*.db
 
 # vercel
 .vercel
@@ -34,3 +40,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Sensitive files - DO NOT COMMIT
+turso.txt
+turso.exe
+.env.local
