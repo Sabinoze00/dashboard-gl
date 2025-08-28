@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createObjective } from '@/lib/db-turso';
+import { jsonResponse } from '@/lib/bigint-utils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     const result = await createObjective(body);
     
-    return NextResponse.json(
+    return jsonResponse(
       { id: result.lastInsertRowid, message: 'Objective created successfully' },
       { status: 201 }
     );

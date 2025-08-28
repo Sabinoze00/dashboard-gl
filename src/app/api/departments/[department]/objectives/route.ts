@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getObjectivesByDepartment } from '@/lib/db-turso'; // Force Turso
 import { Department } from '@/lib/types';
+import { jsonResponse } from '@/lib/bigint-utils';
 
 export async function GET(
   request: NextRequest,
@@ -20,7 +21,7 @@ export async function GET(
 
     const objectives = await getObjectivesByDepartment(department);
     
-    return NextResponse.json(objectives);
+    return jsonResponse(objectives);
   } catch (error) {
     console.error('Error fetching objectives:', error);
     return NextResponse.json(
