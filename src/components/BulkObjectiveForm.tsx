@@ -186,7 +186,8 @@ export default function BulkObjectiveForm({ department, onObjectivesAdded, onCan
           target_numeric: columns[3] || '',
           number_format: (columns[4] as NumberFormat) || 'number',
           start_date: columns[5] || '2025-01-01',
-          end_date: columns[6] || '2025-12-31'
+          end_date: columns[6] || '2025-12-31',
+          reverse_logic: columns[7] === 'true' || false
         };
       });
 
