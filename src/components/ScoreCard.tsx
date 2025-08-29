@@ -202,7 +202,7 @@ export default function ScoreCard({ objective, onObjectiveUpdate }: ScoreCardPro
         </div>
 
         {/* Progress Bar - Only for Cumulative objectives */}
-        {objective.type_objective === 'Cumulativo' ? (
+        {objective.type_objective === 'Cumulativo' && (
           <div className="mb-6">
             <div className="flex justify-between text-base text-gray-700 mb-3">
               <span className="font-medium">Progresso</span>
@@ -220,24 +220,21 @@ export default function ScoreCard({ objective, onObjectiveUpdate }: ScoreCardPro
               </div>
             )}
           </div>
-        ) : (
-          <div className="mb-6">
-            {/* Spacer to maintain card height for non-cumulative objectives */}
-            <div className="h-12"></div>
-          </div>
         )}
 
         {/* Values */}
         <div className="grid grid-cols-2 gap-6 mb-6">
-          <div>
+          <div className="flex flex-col justify-center">
             <div className="text-sm text-brand-text mb-2 font-medium">
               {getCurrentValueLabel()}
             </div>
-            <div className="text-3xl font-bold text-gray-900">
+            <div className={`font-bold text-gray-900 ${
+              objective.type_objective === 'Cumulativo' ? 'text-3xl' : 'text-4xl'
+            }`}>
               {formatValue(currentValue)}
             </div>
           </div>
-          <div>
+          <div className="flex flex-col justify-center">
             <div className="text-sm text-brand-text mb-2 font-medium">Target Finale</div>
             {isEditingTarget ? (
               <div>
@@ -245,7 +242,9 @@ export default function ScoreCard({ objective, onObjectiveUpdate }: ScoreCardPro
                   type="text"
                   value={editTarget}
                   onChange={(e) => setEditTarget(e.target.value)}
-                  className="w-full px-2 py-1 text-3xl font-bold border border-brand-primary rounded focus:outline-none focus:ring-2 focus:ring-brand-primary text-right"
+                  className={`w-full px-2 py-1 font-bold border border-brand-primary rounded focus:outline-none focus:ring-2 focus:ring-brand-primary text-right ${
+                    objective.type_objective === 'Cumulativo' ? 'text-3xl' : 'text-4xl'
+                  }`}
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleSave('target');
@@ -270,7 +269,9 @@ export default function ScoreCard({ objective, onObjectiveUpdate }: ScoreCardPro
             ) : (
               <div 
                 onClick={() => handleClick('target')}
-                className="text-3xl font-bold text-gray-700 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
+                className={`font-bold text-gray-700 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors ${
+                  objective.type_objective === 'Cumulativo' ? 'text-3xl' : 'text-4xl'
+                }`}
                 title="Doppio click per modificare"
               >
                 {formatValue(targetValue)}
