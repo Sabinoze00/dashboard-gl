@@ -36,8 +36,9 @@ export default function ScoreCard({ objective, onObjectiveUpdate }: ScoreCardPro
       status,
       color: getProgressTextColor(progress, status),
       bgColor: getProgressBgColor(progress, status),
-      borderColor: status === 'Raggiunto' ? 'border-green-500' : 
-                   status === 'In corso' ? 'border-blue-500' : 'border-red-500'
+      borderColor: status === 'Raggiunto' || status === 'Completato' ? 'border-green-500' : 
+                   status === 'In corso' ? 'border-blue-500' : 
+                   status === 'Non raggiunto' ? 'border-red-500' : 'border-red-500'
     };
   };
 
@@ -124,16 +125,20 @@ export default function ScoreCard({ objective, onObjectiveUpdate }: ScoreCardPro
   };
 
   return (
-    <div className={`bg-white rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 border group ${
-      isExpired 
-        ? 'border-gray-400 opacity-75' 
-        : 'border-gray-100 hover:border-gray-200'
+    <div className={`bg-white rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 border-2 group ${
+      statusInfo.borderColor
     }`}>
       {/* Status Badge */}
-      {isExpired ? (
+      {status === 'Completato' ? (
         <div className="relative">
-          <div className="absolute -top-2 -right-2 bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10">
-            ⏰ SCADUTO
+          <div className="absolute -top-2 -right-2 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10">
+            ✅ COMPLETATO
+          </div>
+        </div>
+      ) : status === 'Non raggiunto' ? (
+        <div className="relative">
+          <div className="absolute -top-2 -right-2 bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10">
+            ❌ NON RAGGIUNTO
           </div>
         </div>
       ) : daysUntilExpiry <= 30 && daysUntilExpiry > 0 ? (
@@ -285,13 +290,15 @@ export default function ScoreCard({ objective, onObjectiveUpdate }: ScoreCardPro
           <div className="flex justify-between items-center text-sm">
             <span className="text-brand-text">Scadenza:</span>
             <span className={`font-semibold ${
-              isExpired ? 'text-gray-600' :
+              status === 'Completato' ? 'text-green-600' :
+              status === 'Non raggiunto' ? 'text-red-600' :
               daysUntilExpiry <= 7 ? 'text-red-600' :
               daysUntilExpiry <= 30 ? 'text-orange-600' :
               'text-gray-600'
             }`}>
               {new Date(objective.end_date).toLocaleDateString('it-IT')}
-              {isExpired ? ' (Scaduto)' :
+              {status === 'Completato' ? ' (Completato)' :
+               status === 'Non raggiunto' ? ' (Non raggiunto)' :
                daysUntilExpiry <= 1 ? ' (Domani!)' :
                daysUntilExpiry <= 7 ? ` (${daysUntilExpiry} giorni!)` :
                daysUntilExpiry <= 30 ? ` (${daysUntilExpiry} giorni)` :

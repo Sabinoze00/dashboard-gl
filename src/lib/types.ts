@@ -35,7 +35,7 @@ export interface ScoreCardData {
   id: number;
   title: string;
   progress: number;
-  status: 'In corso' | 'Raggiunto' | 'In ritardo';
+  status: 'In corso' | 'Raggiunto' | 'In ritardo' | 'Completato' | 'Non raggiunto';
   currentValue: number;
   targetValue: number;
   type: ObjectiveType;

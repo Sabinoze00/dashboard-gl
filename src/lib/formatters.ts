@@ -5,8 +5,8 @@ export const formatNumber = (value: number, format: NumberFormat = 'number'): st
     return '0';
   }
 
-  // Arrotonda sempre a numero intero, tranne per i decimali espliciti
-  const roundedValue = format === 'decimal' ? Math.round(value * 100) / 100 : Math.round(value);
+  // Arrotonda a 1 cifra decimale, tranne per percentuali e valute che restano intere
+  const roundedValue = format === 'currency' || format === 'percentage' ? Math.round(value) : Math.round(value * 10) / 10;
 
   switch (format) {
     case 'currency':
@@ -26,19 +26,22 @@ export const formatNumber = (value: number, format: NumberFormat = 'number'): st
       
     case 'decimal':
       return new Intl.NumberFormat('it-IT', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1
       }).format(roundedValue);
       
     case 'number':
     default:
-      // Smart formatting: show K/M for large numbers, no decimals
+      // Smart formatting: show K/M for large numbers, con 1 cifra decimale
       if (Math.abs(roundedValue) >= 1000000) {
-        return Math.round(roundedValue / 1000000) + 'M';
+        return (Math.round(roundedValue / 100000) / 10) + 'M';
       } else if (Math.abs(roundedValue) >= 1000) {
-        return Math.round(roundedValue / 1000) + 'K';
+        return (Math.round(roundedValue / 100) / 10) + 'K';
       }
-      return new Intl.NumberFormat('it-IT').format(roundedValue);
+      return new Intl.NumberFormat('it-IT', {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1
+      }).format(roundedValue);
   }
 };
 
@@ -47,8 +50,8 @@ export const formatNumberCompact = (value: number, format: NumberFormat = 'numbe
     return '0';
   }
 
-  // Arrotonda sempre a numero intero
-  const roundedValue = Math.round(value);
+  // Arrotonda a 1 cifra decimale, tranne per percentuali e valute che restano intere
+  const roundedValue = format === 'currency' || format === 'percentage' ? Math.round(value) : Math.round(value * 10) / 10;
 
   // For small displays, always use compact format
   switch (format) {
@@ -58,16 +61,16 @@ export const formatNumberCompact = (value: number, format: NumberFormat = 'numbe
       } else if (Math.abs(roundedValue) >= 1000) {
         return '€' + Math.round(roundedValue / 1000) + 'K';
       }
-      return '€' + new Intl.NumberFormat('it-IT').format(roundedValue);
+      return '€' + new Intl.NumberFormat('it-IT').format(Math.round(roundedValue));
       
     case 'percentage':
       return Math.round(roundedValue) + '%';
       
     case 'decimal':
       if (Math.abs(roundedValue) >= 1000) {
-        return Math.round(roundedValue / 1000) + 'K';
+        return (Math.round(roundedValue / 100) / 10) + 'K';
       }
-      return Math.round(roundedValue).toString();
+      return roundedValue.toFixed(1);
       
     case 'number':
     default:

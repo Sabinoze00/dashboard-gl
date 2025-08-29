@@ -2,7 +2,7 @@ import { ObjectiveWithValues, ObjectiveType } from './types';
 
 export interface ProgressResult {
   progress: number;
-  status: 'In corso' | 'Raggiunto' | 'In ritardo' | 'Scaduto';
+  status: 'In corso' | 'Raggiunto' | 'In ritardo' | 'Completato' | 'Non raggiunto';
   currentValue: number;
   isOnTrack: boolean;
   isExpired: boolean;
@@ -68,13 +68,13 @@ export const calculateObjectiveProgress = (objective: ObjectiveWithValues): Prog
   }
 
   // Determine status
-  let status: 'In corso' | 'Raggiunto' | 'In ritardo' | 'Scaduto';
+  let status: 'In corso' | 'Raggiunto' | 'In ritardo' | 'Completato' | 'Non raggiunto';
   
   if (isExpired) {
     if (progress >= 100) {
-      status = 'Raggiunto'; // Completed before expiry
+      status = 'Completato'; // Completed before expiry (with green border)
     } else {
-      status = 'Scaduto'; // Expired without completion
+      status = 'Non raggiunto'; // Expired without completion (with red border)
     }
   } else if (progress >= 100) {
     status = 'Raggiunto';
@@ -95,22 +95,22 @@ export const calculateObjectiveProgress = (objective: ObjectiveWithValues): Prog
 };
 
 export const getProgressColor = (progress: number, status: string): string => {
-  if (status === 'Raggiunto') return 'bg-green-500';
+  if (status === 'Raggiunto' || status === 'Completato') return 'bg-green-500';
   if (status === 'In corso') return 'bg-blue-500';
-  if (status === 'Scaduto') return 'bg-gray-500';
+  if (status === 'Non raggiunto') return 'bg-red-500';
   return 'bg-red-500';
 };
 
 export const getProgressTextColor = (progress: number, status: string): string => {
-  if (status === 'Raggiunto') return 'text-green-700';
+  if (status === 'Raggiunto' || status === 'Completato') return 'text-green-700';
   if (status === 'In corso') return 'text-blue-700';
-  if (status === 'Scaduto') return 'text-gray-700';
+  if (status === 'Non raggiunto') return 'text-red-700';
   return 'text-red-700';
 };
 
 export const getProgressBgColor = (progress: number, status: string): string => {
-  if (status === 'Raggiunto') return 'bg-green-50';
+  if (status === 'Raggiunto' || status === 'Completato') return 'bg-green-50';
   if (status === 'In corso') return 'bg-blue-50';
-  if (status === 'Scaduto') return 'bg-gray-50';
+  if (status === 'Non raggiunto') return 'bg-red-50';
   return 'bg-red-50';
 };
