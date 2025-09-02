@@ -304,6 +304,106 @@ export const updateObjective = async (
   }
 };
 
+// Get all objectives from all departments - for AI Chat
+export const getAllObjectivesWithValues = async () => {
+  try {
+    // Get all objectives from all departments
+    const objectivesResult = await db.execute({
+      sql: `SELECT * FROM objectives ORDER BY department, order_index ASC, created_at DESC`
+    });
+    
+    const objectives = objectivesResult.rows;
+    
+    // Get values for each objective
+    const enrichedObjectives = await Promise.all(
+      objectives.map(async (objective) => {
+        const valuesResult = await db.execute({
+          sql: `SELECT * FROM objective_values WHERE objective_id = ? ORDER BY year, month`,
+          args: [objective.id]
+        });
+        
+        // Calculate derived values
+        const currentDate = new Date();
+        const values = valuesResult.rows;
+        
+        // Calculate current value based on objective type
+        const currentYear = currentDate.getFullYear();
+        const currentYearValues = values.filter((v: any) => Number(v.year) === currentYear);
+        
+        let currentValue = 0;
+        switch (objective.type_objective) {
+          case 'Cumulativo':
+            currentValue = currentYearValues.reduce((sum: number, v: any) => sum + Number(v.value), 0);
+            break;
+          case 'Mantenimento':
+            if (currentYearValues.length > 0) {
+              currentValue = currentYearValues.reduce((sum: number, v: any) => sum + Number(v.value), 0) / currentYearValues.length;
+            }
+            break;
+          case 'Ultimo mese':
+            if (currentYearValues.length > 0) {
+              const sortedValues = currentYearValues.sort((a: any, b: any) => Number(b.month) - Number(a.month));
+              currentValue = Number(sortedValues[0]?.value) || 0;
+            }
+            break;
+        }
+        
+        // Calculate progress
+        const targetNumeric = Number(objective.target_numeric);
+        let progress = 0;
+        
+        if (objective.reverse_logic) {
+          // For reverse logic: lower is better
+          if (currentValue <= targetNumeric) {
+            progress = 100;
+          } else {
+            progress = Math.max(0, (targetNumeric / currentValue) * 100);
+          }
+        } else {
+          // Standard logic: higher is better
+          progress = targetNumeric > 0 ? (currentValue / targetNumeric) * 100 : 0;
+        }
+        
+        // Check if expired
+        const endDate = new Date(String(objective.end_date));
+        const isExpired = currentDate > endDate;
+        
+        // Calculate days until expiry
+        const daysUntilExpiry = Math.ceil((endDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // Determine status
+        let status = '';
+        if (isExpired && progress >= 100) {
+          status = 'Completato';
+        } else if (isExpired && progress < 100) {
+          status = 'Non raggiunto';
+        } else if (!isExpired && progress >= 100) {
+          status = 'Raggiunto';
+        } else if (!isExpired && progress >= 70) {
+          status = 'In corso';
+        } else {
+          status = 'In ritardo';
+        }
+        
+        return {
+          ...objective,
+          values: values,
+          currentValue: Math.round(currentValue * 100) / 100,
+          progress: Math.round(progress * 100) / 100,
+          isExpired,
+          daysUntilExpiry,
+          status
+        };
+      })
+    );
+    
+    return enrichedObjectives;
+  } catch (error) {
+    console.error('Error fetching all objectives with values:', error);
+    throw error;
+  }
+};
+
 // Enhanced API function for AI with all calculated analytics - adapted for async
 export const getEnrichedObjectivesByDepartment = async (department: string) => {
   try {

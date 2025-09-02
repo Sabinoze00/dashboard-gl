@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createObjective } from '@/lib/db-turso';
+import { createObjective, getAllObjectivesWithValues } from '@/lib/db-turso';
 import { jsonResponse } from '@/lib/bigint-utils';
 
 export async function POST(request: NextRequest) {
@@ -43,6 +43,19 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error('Error creating objective:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET() {
+  try {
+    const objectives = await getAllObjectivesWithValues();
+    return jsonResponse(objectives);
+  } catch (error) {
+    console.error('Error fetching objectives:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

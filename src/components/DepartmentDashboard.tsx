@@ -13,6 +13,7 @@ import AddObjectiveForm from './AddObjectiveForm';
 import BulkObjectiveForm from './BulkObjectiveForm';
 import PeriodSelector, { PeriodSelection } from './PeriodSelector';
 import { filterObjectivesByPeriod, calculateCurrentValueForPeriod, calculateProgressForPeriod } from '@/lib/period-filter';
+import AIChat from './AIChat';
 import {
   DndContext,
   closestCenter,
@@ -40,6 +41,7 @@ export default function DepartmentDashboard({ department }: DepartmentDashboardP
   const [activeView, setActiveView] = useState<'overview' | 'grid'>('overview');
   const [showAddForm, setShowAddForm] = useState(false);
   const [showBulkForm, setShowBulkForm] = useState(false);
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodSelection>({
     startMonth: 1,
     endMonth: new Date().getMonth() + 1, // Current month
@@ -259,6 +261,15 @@ export default function DepartmentDashboard({ department }: DepartmentDashboardP
                 onPeriodChange={setSelectedPeriod}
                 className="hidden sm:block"
               />
+              <button
+                onClick={() => setIsAIChatOpen(true)}
+                className="flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                <span>AI</span>
+              </button>
             </div>
             
             <div className="flex space-x-3">
@@ -399,6 +410,13 @@ export default function DepartmentDashboard({ department }: DepartmentDashboardP
           onCancel={() => setShowBulkForm(false)}
         />
       )}
+
+      {/* AI Chat Dialog */}
+      <AIChat 
+        isOpen={isAIChatOpen} 
+        onClose={() => setIsAIChatOpen(false)}
+        department={department}
+      />
     </div>
   );
 }
