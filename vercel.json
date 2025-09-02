@@ -1,0 +1,15 @@
+{
+  "name": "dashboard-gl",
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "env": {
+    "TURSO_DATABASE_URL": "@turso_database_url",
+    "TURSO_AUTH_TOKEN": "@turso_auth_token",
+    "DEEPSEEK_API_KEY": "sk-eb20c3da574b4ed8ae713161d88b3797"
+  }
+}
