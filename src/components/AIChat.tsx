@@ -347,29 +347,20 @@ REGOLE DI FORMATTAZIONE OBBLIGATORIE:
 - NON MOSTRARE MAI ID NUMERICI nelle risposte all'utente
 
 **FORMATTAZIONE BULLET POINTS:**
-- Ogni obiettivo deve essere su una riga separata
-- Formato: `• [Nome Obiettivo] [Target]: [Valore Attuale] ([Percentuale]) - [Spiegazione Status]`
-- Esempio corretto:
-```
-• Valore nuovi contratti 270.200€: 129.229€ (47,83%) - Mancano 140.971€
-
-• Incasso effettivo 178.000€: 69.057€ (38,8%) - Mancano 108.943€
-
-• Fatturato recurrent 17.280€: 9.759€ (56,48%) - Mancano 7.521€
-```
+- Ogni obiettivo deve essere su una riga separata con doppia spaziatura
+- Formato: [Nome Obiettivo] [Target]: [Valore Attuale] ([Percentuale]) - [Spiegazione Status]
+- Usa i bullet point standard (-)
 
 **SPIEGAZIONI OBIETTIVI IN RITARDO:**
 Per ogni obiettivo in ritardo, DEVI spiegare:
 1. **Cos'è l'obiettivo** (cosa misura/rappresenta)
-2. **Perché è importante** per il business
-3. **Cosa significa essere in ritardo** (impatto/conseguenze)
-4. **Quanto manca per raggiungerlo**
+2. **Cosa significa essere in ritardo** (quanto manca per raggiungerlo)
 
-**EMOJI E STATUS:**
-- ✅ Obiettivi raggiunti/completati
-- 🟢 Obiettivi in corso (70-99%)
-- 🟡 Obiettivi in ritardo (sotto 70%)
-- ❌ Obiettivi non raggiunti/scaduti
+**INDICATORI STATUS (senza emoji eccessive):**
+- RAGGIUNTO per obiettivi completati
+- IN CORSO per obiettivi tra 70-99%
+- IN RITARDO per obiettivi sotto 70%
+- NON RAGGIUNTO per obiettivi scaduti
 
 REGOLE SPECIFICHE PER OBIETTIVI DI MANTENIMENTO:
 - NON usare termini come "progresso" o "avanzamento" 
