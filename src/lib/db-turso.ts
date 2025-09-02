@@ -371,7 +371,7 @@ export const getAllObjectivesWithValues = async () => {
         // Calculate days until expiry
         const daysUntilExpiry = Math.ceil((endDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
         
-        // Determine status
+        // Determine status with unified logic
         let status = '';
         if (isExpired && progress >= 100) {
           status = 'Completato';
@@ -381,8 +381,52 @@ export const getAllObjectivesWithValues = async () => {
           status = 'Raggiunto';
         } else if (!isExpired && progress >= 70) {
           status = 'In corso';
-        } else {
+        } else if (!isExpired && progress < 70 && (objective.type_objective === "Ultimo mese" || objective.type_objective === "Mantenimento")) {
           status = 'In ritardo';
+        } else if (!isExpired && progress < 70 && objective.type_objective === "Cumulativo") {
+          status = 'Sotto target';
+        } else {
+          status = 'In ritardo'; // fallback
+        }
+        
+        // Calculate pro-rata roadmap fields (only for Cumulativo and not expired)
+        let expectedCurrentValue: number | null = null;
+        let isOnTrack: boolean | null = null;
+        let performanceVsExpected: number | null = null;
+        
+        if (objective.type_objective === 'Cumulativo' && !isExpired) {
+          const startDate = new Date(String(objective.start_date));
+          
+          // Calculate total days and elapsed days
+          const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+          const elapsedDays = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+          
+          // Ensure elapsed days don't exceed total days
+          const safeDays = Math.max(0, Math.min(elapsedDays, totalDays));
+          
+          if (totalDays > 0) {
+            // Calculate expected value based on time elapsed
+            const timeElapsedRatio = safeDays / totalDays;
+            expectedCurrentValue = targetNumeric * timeElapsedRatio;
+            
+            // Determine if on track (consider reverse logic)
+            if (objective.reverse_logic) {
+              isOnTrack = currentValue <= expectedCurrentValue;
+            } else {
+              isOnTrack = currentValue >= expectedCurrentValue;
+            }
+            
+            // Calculate performance vs expected
+            if (expectedCurrentValue > 0) {
+              performanceVsExpected = (currentValue / expectedCurrentValue) * 100;
+            } else {
+              performanceVsExpected = currentValue === 0 ? 100 : 0;
+            }
+            
+            // Round to 2 decimal places
+            expectedCurrentValue = Math.round(expectedCurrentValue * 100) / 100;
+            performanceVsExpected = Math.round(performanceVsExpected * 100) / 100;
+          }
         }
         
         return {
@@ -392,7 +436,11 @@ export const getAllObjectivesWithValues = async () => {
           progress: Math.round(progress * 100) / 100,
           isExpired,
           daysUntilExpiry,
-          status
+          status,
+          // Pro-rata roadmap fields
+          expectedCurrentValue,
+          isOnTrack,
+          performanceVsExpected
         };
       })
     );

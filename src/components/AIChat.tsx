@@ -78,6 +78,8 @@ values: L'array dei dati grezzi mensili su cui basare i calcoli.
 
 isExpired, progress, currentValue, status: I campi calcolati che devi verificare e spiegare.
 
+expectedCurrentValue, isOnTrack, performanceVsExpected: (SOLO per obiettivi Cumulativi) Campi calcolati che definiscono la "roadmap" o l'andamento atteso. Indicano se l'obiettivo è in linea con le aspettative temporali pro-rata.
+
 2. Logica di Calcolo del currentValue (Valore Attuale)
 Il calcolo del currentValue dipende obbligatoriamente dal campo type_objective. Applica sempre una delle seguenti regole:
 
@@ -124,6 +126,23 @@ SE isExpired è false E progress è >= 70 E < 100 ALLORA status = "In corso" (�
 SE isExpired è false E progress è < 70 E (type_objective = "Ultimo mese" o "Mantenimento") ALLORA status = "In ritardo" (🟡 Obiettivo che richiede attenzione immediata).
 
 SE isExpired è false E progress è < 70 E type_objective = "Cumulativo" ALLORA status = "Sotto target" (🟡 Obiettivo attivo ma con una performance attuale inferiore alle aspettative per il periodo).
+
+5. Logica di Analisi della Roadmap (SOLO per obiettivi Cumulativi)
+Per gli obiettivi di tipo "Cumulativo", devi distinguere tra lo 'status' generale e l'andamento rispetto alla 'roadmap' temporale. Utilizza i seguenti campi aggiuntivi:
+
+expectedCurrentValue: Il valore che dovrebbe essere raggiunto pro-rata temporale alla data corrente. Calcolato come: (target_numeric * giorni_trascorsi) / giorni_totali.
+
+isOnTrack: Boolean che indica se l'obiettivo è in linea con la roadmap temporale. true se currentValue >= expectedCurrentValue, false altrimenti.
+
+performanceVsExpected: Percentuale che confronta la performance attuale con quella attesa. Calcolato come: (currentValue / expectedCurrentValue) * 100.
+
+REGOLE DI INTERPRETAZIONE ROADMAP:
+- Se isOnTrack = true: "L'obiettivo è in linea con la roadmap temporale" o "L'obiettivo è avanti rispetto al programma"
+- Se isOnTrack = false: "L'obiettivo è in ritardo rispetto alla roadmap temporale"
+- Se performanceVsExpected > 100: "Performance superiore alle aspettative temporali"
+- Se performanceVsExpected < 100: "Performance inferiore alle aspettative temporali"
+
+IMPORTANTE: La roadmap temporale è DIVERSA dal raggiungimento finale del target. Un obiettivo può essere "Sotto target" come status generale ma "In linea con la roadmap" temporalmente.
 
 GESTIONE DI DOMANDE SU PIÙ OBIETTIVI
 Se l'utente chiede un riepilogo o un confronto (es. "Quali sono gli obiettivi in ritardo?", "Dammi una sintesi del dipartimento Sales"), la tua risposta deve:
@@ -191,6 +210,14 @@ Contesto Temporale:
 Periodo: Da [start_date] a [end_date]
 
 Scadenza: [Scaduto / Non Scaduto]. [daysUntilExpiry] giorni rimanenti.
+
+Analisi della Roadmap (SOLO per obiettivi Cumulativi):
+
+Valore Atteso alla Data Corrente: [expectedCurrentValue] (basato su calcolo pro-rata temporale)
+
+Andamento Roadmap: [isOnTrack ? "In linea con la roadmap temporale" : "In ritardo rispetto alla roadmap temporale"]
+
+Performance vs Aspettative: [performanceVsExpected]% ([performanceVsExpected > 100 ? "Superiore alle aspettative temporali" : "Inferiore alle aspettative temporali"])
 
 3. Dati Storici (se richiesto o rilevante)
 Se l'utente chiede un'analisi del trend, elenca i valori storici in modo chiaro.
@@ -289,82 +316,8 @@ export default function AIChat({ isOpen, onClose, department }: AIDialogProps) {
       if (!response.ok) throw new Error('Failed to fetch objectives');
       const data = await response.json();
       
-      // Se non è un dipartimento specifico, restituisci tutti i dati
-      if (!department) {
-        return data;
-      }
-      
-      // Se è un dipartimento specifico e l'API non restituisce i campi calcolati, li calcoliamo
-      return data.map((objective: any) => {
-        if (objective.currentValue === undefined) {
-          // Calcola i valori se non presenti (per compatibilità)
-          const currentDate = new Date();
-          const currentYear = currentDate.getFullYear();
-          const currentYearValues = objective.values?.filter((v: any) => Number(v.year) === currentYear) || [];
-          
-          let currentValue = 0;
-          switch (objective.type_objective) {
-            case 'Cumulativo':
-              currentValue = currentYearValues.reduce((sum: number, v: any) => sum + Number(v.value), 0);
-              break;
-            case 'Mantenimento':
-              if (currentYearValues.length > 0) {
-                currentValue = currentYearValues.reduce((sum: number, v: any) => sum + Number(v.value), 0) / currentYearValues.length;
-              }
-              break;
-            case 'Ultimo mese':
-              if (currentYearValues.length > 0) {
-                const sortedValues = currentYearValues.sort((a: any, b: any) => Number(b.month) - Number(a.month));
-                currentValue = Number(sortedValues[0]?.value) || 0;
-              }
-              break;
-          }
-          
-          const targetNumeric = Number(objective.target_numeric);
-          let progress = 0;
-          
-          if (objective.reverse_logic) {
-            if (currentValue <= targetNumeric) {
-              progress = 100;
-            } else {
-              progress = Math.max(0, (targetNumeric / currentValue) * 100);
-            }
-          } else {
-            progress = targetNumeric > 0 ? (currentValue / targetNumeric) * 100 : 0;
-          }
-          
-          const endDate = new Date(String(objective.end_date));
-          const isExpired = currentDate > endDate;
-          const daysUntilExpiry = Math.ceil((endDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
-          
-          let status = '';
-          if (isExpired && progress >= 100) {
-            status = 'Completato';
-          } else if (isExpired && progress < 100) {
-            status = 'Non raggiunto';
-          } else if (!isExpired && progress >= 100) {
-            status = 'Raggiunto';
-          } else if (!isExpired && progress >= 70) {
-            status = 'In corso';
-          } else if (!isExpired && progress < 70 && (objective.type_objective === "Ultimo mese" || objective.type_objective === "Mantenimento")) {
-            status = 'In ritardo';
-          } else if (!isExpired && progress < 70 && objective.type_objective === "Cumulativo") {
-            status = 'Sotto target';
-          } else {
-            status = 'In ritardo'; // fallback
-          }
-          
-          return {
-            ...objective,
-            currentValue: Math.round(currentValue * 100) / 100,
-            progress: Math.round(progress * 100) / 100,
-            isExpired,
-            daysUntilExpiry,
-            status
-          };
-        }
-        return objective;
-      });
+      // Backend now handles all calculations including pro-rata roadmap fields
+      return data;
     } catch (error) {
       console.error('Error fetching objectives:', error);
       return null;

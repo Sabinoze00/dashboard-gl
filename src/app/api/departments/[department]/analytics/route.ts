@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getEnrichedObjectivesByDepartment } from '@/lib/db-turso';
+import { getAllObjectivesWithValues } from '@/lib/db-turso';
 import { Department } from '@/lib/types';
 
 export async function GET(
@@ -18,7 +18,7 @@ export async function GET(
       );
     }
 
-    const analyticsData = await getEnrichedObjectivesByDepartment(department);
+    const analyticsData = await getAllObjectivesWithValues(department);
     
     return NextResponse.json(analyticsData);
   } catch (error) {

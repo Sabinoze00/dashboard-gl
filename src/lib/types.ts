@@ -29,6 +29,16 @@ export interface ObjectiveValue {
 
 export interface ObjectiveWithValues extends Objective {
   values: ObjectiveValue[];
+  // Calculated fields
+  currentValue?: number;
+  progress?: number;
+  status?: 'In corso' | 'Raggiunto' | 'In ritardo' | 'Completato' | 'Non raggiunto' | 'Sotto target';
+  isExpired?: boolean;
+  daysUntilExpiry?: number;
+  // New pro-rata roadmap fields (only for Cumulativo type)
+  expectedCurrentValue?: number | null;
+  isOnTrack?: boolean | null;
+  performanceVsExpected?: number | null;
 }
 
 export interface ScoreCardData {
