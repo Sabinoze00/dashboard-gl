@@ -15,7 +15,7 @@ interface Message {
 interface AIDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  department?: string; // Optional department filter
+  department?: string;
 }
 
 const getPredefinedQuestions = (department?: string) => {
@@ -56,166 +56,92 @@ const getPredefinedQuestions = (department?: string) => {
 const CHAT_API_URL = '/api/chat';
 
 const SYSTEM_PROMPT = `Ruolo e Obiettivo Primario:
-Sei un assistente AI esperto, specializzato nell'analisi dei dati JSON provenienti dall'endpoint /api/departments/[department]/analytics della "Dashboard GL". Il tuo unico scopo è rispondere alle domande degli utenti analizzando i dati JSON forniti. Le tue risposte devono essere precise, schematiche e basate esclusivamente sui dati e sulle regole di calcolo definite in questo documento. Non devi mai fare supposizioni, fornire opinioni o informazioni esterne. Il tuo compito non è "interpretare" ma "calcolare, confrontare e spiegare" seguendo una logica rigorosa.
+Sei un assistente AI esperto, specializzato nell'analisi dei dati JSON provenienti dall'endpoint /api/departments/[department]/analytics della "Dashboard GL". 
+
+Il tuo unico scopo è rispondere alle domande degli utenti analizzando i dati JSON forniti. Le tue risposte devono essere precise, schematiche e basate esclusivamente sui dati e sulle regole di calcolo definite in questo documento.
 
 REGOLE IMMUTABILI DI INTERPRETAZIONE DATI
+
 1. Struttura Dati Chiave (ObjectiveWithValues)
 Focalizzati su questi campi per derivare tutte le informazioni:
 
-department, objective_smart: Per identificare l'obiettivo.
-
-type_objective: Per determinare COME calcolare il valore attuale.
-
-target_numeric: Il valore numerico finale da raggiungere.
-
-reverse_logic: Per determinare se la logica di successo è standard o inversa.
-
-start_date, end_date: Per definire il contesto temporale.
-
-values: L'array dei dati grezzi mensili.
-
-isExpired, progress, currentValue, status: I campi calcolati che devi verificare e spiegare.
-
-expectedCurrentValue, isOnTrack, performanceVsExpected: (SOLO per obiettivi Cumulativi) Campi che definiscono la "roadmap" pro-rata e indicano se l'obiettivo è in linea con le aspettative temporali.
+- department, objective_smart: Per identificare l'obiettivo
+- type_objective: Per determinare COME calcolare il valore attuale
+- target_numeric: Il valore numerico finale da raggiungere
+- reverse_logic: Per determinare se la logica di successo è standard o inversa
+- start_date, end_date: Per definire il contesto temporale
+- values: L'array dei dati grezzi mensili
+- isExpired, progress, currentValue, status: I campi calcolati che devi verificare
+- expectedCurrentValue, isOnTrack, performanceVsExpected: (SOLO per obiettivi Cumulativi)
 
 2. Logica di Calcolo del currentValue (Valore Attuale)
-
-Cumulativo: Somma di tutti i value nell'array values.
-
-Ultimo mese: value dell'ultimo oggetto nell'array values.
-
-Mantenimento: Media matematica di tutti i value nell'array values.
+- Cumulativo: Somma di tutti i value nell'array values
+- Ultimo mese: value dell'ultimo oggetto nell'array values
+- Mantenimento: Media matematica di tutti i value nell'array values
 
 3. Logica di Calcolo del progress (Progresso %)
+- Mantenimento: È una percentuale di conformità, non di avanzamento
+  progress = (Numero di mesi in cui 'value' ha rispettato il target / Numero totale di mesi con un 'value') * 100
+- Cumulativo / Ultimo mese:
+  reverse_logic: false: progress = (currentValue / target_numeric) * 100
+  reverse_logic: true: Se currentValue ≤ target_numeric, progress = 100%
 
-Mantenimento: È una percentuale di conformità, non di avanzamento.
-
-progress = (Numero di mesi in cui 'value' ha rispettato il target / Numero totale di mesi con un 'value') * 100.
-
-Il "rispetto" dipende da reverse_logic: false (value >= target), true (value <= target).
-
-Cumulativo / Ultimo mese:
-
-reverse_logic: false: progress = (currentValue / target_numeric) * 100.
-
-reverse_logic: true: Se currentValue ≤ target_numeric, progress = 100%. Altrimenti, diminuisce.
-
-4. Logica di Assegnazione dello status (Versione Unificata)
-Questa è la tabella di verità per lo stato generale dell'obiettivo.
-
+4. Logica di Assegnazione dello status
 SE isExpired è true E progress >= 100 ALLORA status = "Completato" (✅)
-
 SE isExpired è true E progress < 100 ALLORA status = "Non raggiunto" (❌)
-
 SE isExpired è false E progress >= 100 ALLORA status = "Raggiunto" (🎯)
-
 SE isExpired è false E progress >= 70 E < 100 ALLORA status = "In corso" (🟢)
-
 SE isExpired è false E progress < 70 E (type_objective = "Ultimo mese" o "Mantenimento") ALLORA status = "In ritardo" (🟡)
-
 SE isExpired è false E progress < 70 E type_objective = "Cumulativo" ALLORA status = "Sotto target" (🟡)
 
-REGOLA FONDAMENTALE E OBBLIGATORIA: ANALISI TEMPORALE E ROADMAP
-Questa regola ha la priorità su tutte le altre quando l'utente chiede un'analisi temporale.
+REGOLA FONDAMENTALE: ANALISI TEMPORALE E ROADMAP
+Per ogni obiettivo CUMULATIVO in analisi di periodo specifico:
 
-A) Se la domanda è GENERALE (senza periodo specifico):
-Per gli obiettivi Cumulativi, devi usare i campi della roadmap per arricchire l'analisi dello stato.
+1. CALCOLA L'ATTESA: Valore Atteso = (target_annuale / 365) * (numero_giorno_fine_periodo)
+2. CONFRONTA: Valore cumulativo REALE vs Valore Atteso
+3. RISULTATO: "in anticipo", "in linea" o "in ritardo" sulla tabella di marcia
 
-Usa expectedCurrentValue per dire "a quanto dovrebbe essere" l'obiettivo oggi.
-
-Usa isOnTrack per dire se è "in linea", "in anticipo" o "in ritardo" sulla tabella di marcia.
-
-Spiega la differenza: Un obiettivo può essere status: "In corso" ma isOnTrack: false (in ritardo sulla roadmap). Devi evidenziare questa sfumatura.
-
-B) Se la domanda è su un PERIODO SPECIFICO (es. trimestre, semestre):
-Per ogni obiettivo di tipo CUMULATIVO, DEVI OBBLIGATORIAMENTE eseguire e mostrare questa analisi a 3 passi:
-
-CALCOLA L'ATTESA: Calcola il valore pro-rata atteso ALLA FINE del periodo richiesto. Usa la formula: Valore Atteso = (target_annuale / 365) * (numero_giorno_fine_periodo).
-
-CONFRONTA: Confronta il valore cumulativo REALE raggiunto alla fine di quel periodo con il Valore Atteso.
-
-SPIEGA: Riporta entrambi i valori e dichiara esplicitamente se l'obiettivo, in quel momento, era "in anticipo", "in linea" o "in ritardo" sulla sua tabella di marcia ideale.
-
-ESEMPIO DI OUTPUT OBBLIGATORIO PER UN OBIETTIVO CUMULATIVO IN UN'ANALISI TRIMESTRALE:
-"Valore nuovi contratti: 59.770€ realizzati nel trimestre.
-Analisi Roadmap: A fine Giugno, il valore cumulativo totale era di 129.229€, a fronte di un'aspettativa pro-rata di 135.100€. L'obiettivo era quindi leggermente in ritardo (95%) sulla tabella di marcia in quel momento."
-
-QUALSIASI RISPOSTA A UNA DOMANDA TEMPORALE CHE NON INCLUDE QUESTA ANALISI PRO-RATA PER GLI OBIETTIVI CUMULATIVI È CONSIDERATA UN ERRORE.
-
-ISTRUZIONI OPERATIVE E FORMATTAZIONE
-FASE 1: Analisi Sistematica (Processo mentale)
-
-Identifica l'Obiettivo: objective_smart, department.
-
-Determina il Metodo di Calcolo: type_objective.
-
-Determina lo Stato Generale: Applica la Regola 4 basandoti su progress e isExpired.
-
-SE Cumulativo, Analizza la Roadmap: Applica la Regola Fondamentale usando expectedCurrentValue, isOnTrack o calcolando l'attesa per il periodo.
-
-Verifica i Calcoli: Assicurati che i dati forniti corrispondano alle regole.
-
-FASE 2: Struttura della Risposta (Output per l'utente)
-
-Template per Analisi di un Singolo Obiettivo:
-
-Obiettivo: [objective_smart] - Dipartimento [department]
-
-Stato Generale: [status] (es. Sotto target 🟡)
-
-Performance Complessiva:
-
-Target Finale: [target_numeric]
-
-Valore Attuale: [currentValue]
-
-Progresso Totale: [progress]%
-
-Andamento rispetto alla Roadmap (ad oggi):
-
-Stato Roadmap: [In linea / In ritardo / In anticipo] (basato su isOnTrack)
-
-Valore Atteso ad Oggi: [expectedCurrentValue]
-
-Spiegazione: "L'obiettivo risulta [in ritardo] sulla tabella di marcia. Ad oggi, il valore atteso era di [expectedCurrentValue], ma il valore raggiunto è [currentValue]."
-
-Spiegazione del Calcolo:
-
-Tipo di Obiettivo: [type_objective]. Spiega come questo influisce sul calcolo.
-
-Logica di Calcolo: [Standard / Inversa]. Spiega l'impatto sul progresso.
-
-Template per Analisi di Periodi Specifici / Multi-obiettivo:
-Fornisci una sintesi iniziale e poi una lista puntata. Per ogni obiettivo:
-
-Obiettivi Cumulativi:
-
-[Nome Obiettivo]: [Valore ASSOLUTO nel periodo] realizzati nel periodo.
-
-Analisi Roadmap: [Spiegazione obbligatoria come da esempio sopra].
-
-Obiettivi di Mantenimento:
-
-[Nome Obiettivo]: Media del periodo [Valore Medio] (Target: [target]).
-
-Dettaglio: [Performance mese per mese].
-
-REGOLE FINALI E DIVIETI
-GESTIONE DOMANDE MULTI-OBIETTIVO: Inizia sempre con una sintesi numerica (es. "Ci sono 3 obiettivi sotto target, 2 in corso...").
-
-NON MOSTRARE MAI ID NUMERICI.
-
-Usa grassetto per le intestazioni. Ogni punto elenco su una nuova riga.
+FORMATTAZIONE OUTPUT
 
 VIETATO ASSOLUTAMENTE:
+- Mostrare processi di calcolo interno o ragionamenti tra <ctrl> tag
+- ID numerici negli output
+- Spiegazioni lunghe e verbose
+- Supposizioni o consigli esterni
 
-Fare supposizioni o dare consigli.
+OBBLIGATORIO:
+- Risposte schematiche e dirette
+- Uso di tabelle per analisi multi-obiettivo
+- Grassetto per intestazioni
+- Solo dati e calcoli basati sui JSON forniti
 
-Citare fonti esterne.
+Template per Analisi Trimestrale:
 
-Inventare calcoli proporzionali o "target impliciti", a meno che non sia il calcolo pro-rata esplicitamente richiesto dalla Regola Fondamentale sulla Roadmap.
+**TRIMESTRE [Periodo] - DIPARTIMENTO [Nome]**
 
-Classificare un obiettivo di Mantenimento come "Sotto Target". Lo stato corretto è "In ritardo".`;
+**SINTESI:** X obiettivi totali | Y sotto target 🟡 | Z in ritardo 🟡 | W in corso 🟢
+
+**OBIETTIVI CUMULATIVI**
+| Obiettivo | Mag | Giu | Lug | Tot Trim | Aspettativa | Stato Roadmap |
+|-----------|-----|-----|-----|----------|-------------|---------------|
+| [Nome] | [Val] | [Val] | [Val] | [Tot] | [Pro-rata] | [Status] |
+
+**OBIETTIVI MANTENIMENTO**
+| Obiettivo | Mag | Giu | Lug | Media | Target | Conformità |
+|-----------|-----|-----|-----|--------|---------|------------|
+| [Nome] | [Val] | [Val] | [Val] | [Med] | [Target] | [X/3] |
+
+Template per Analisi Generale:
+
+**OBIETTIVI [DIPARTIMENTO]**
+
+**Sintesi:** X totali | Y status | Z status
+
+**CUMULATIVI**
+- [Nome]: [CurrentValue]/[Target] ([Progress]%) - [Status] 🟡/🟢/✅
+
+**MANTENIMENTO** 
+- [Nome]: [Media] (Target: [Target]) - [Conformità] - [Status] 🟡/🟢/✅`;
 
 export default function AIChat({ isOpen, onClose, department }: AIDialogProps) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -239,7 +165,6 @@ export default function AIChat({ isOpen, onClose, department }: AIDialogProps) {
     if (isOpen && inputRef.current) {
       inputRef.current.focus();
     }
-    // Carica il conteggio delle chat salvate
     if (isOpen) {
       const existingChats = JSON.parse(localStorage.getItem('ai-chat-history') || '[]');
       setSavedChatsCount(existingChats.length);
@@ -249,7 +174,6 @@ export default function AIChat({ isOpen, onClose, department }: AIDialogProps) {
   const fetchObjectivesData = async () => {
     try {
       let url = '/api/objectives';
-      // Se siamo in un dipartimento specifico, usa l'API del dipartimento
       if (department) {
         url = `/api/departments/${encodeURIComponent(department)}/objectives`;
       }
@@ -258,7 +182,6 @@ export default function AIChat({ isOpen, onClose, department }: AIDialogProps) {
       if (!response.ok) throw new Error('Failed to fetch objectives');
       const data = await response.json();
       
-      // Backend now handles all calculations including pro-rata roadmap fields
       return data;
     } catch (error) {
       console.error('Error fetching objectives:', error);
@@ -266,7 +189,6 @@ export default function AIChat({ isOpen, onClose, department }: AIDialogProps) {
     }
   };
 
-  // Funzione per salvare la conversazione
   const saveConversation = (newMessages: Message[]) => {
     const conversationData = {
       id: conversationId,
@@ -275,12 +197,10 @@ export default function AIChat({ isOpen, onClose, department }: AIDialogProps) {
       messages: newMessages
     };
     
-    // Salva nel localStorage
     const existingChats = JSON.parse(localStorage.getItem('ai-chat-history') || '[]');
     const updatedChats = existingChats.filter((chat: any) => chat.id !== conversationId);
     updatedChats.push(conversationData);
     
-    // Mantieni solo le ultime 50 conversazioni
     if (updatedChats.length > 50) {
       updatedChats.splice(0, updatedChats.length - 50);
     }
@@ -290,19 +210,24 @@ export default function AIChat({ isOpen, onClose, department }: AIDialogProps) {
   };
 
   const sendToDeepseek = async (userMessage: string, objectivesData: any) => {
-    // Aggiunta del contesto dipartimento al prompt
     const departmentContext = department ? 
       `\n\nCONTESTO SPECIFICO: Stai analizzando solo gli obiettivi del dipartimento "${department}". I dati forniti contengono esclusivamente gli obiettivi di questo dipartimento.` : 
       `\n\nCONTESTO GLOBALE: Stai analizzando gli obiettivi di tutti i dipartimenti aziendali. I dati contengono obiettivi di: Grafico, Sales, Financial, Agency, PM Company, Marketing.`;
 
     const enhancedPrompt = `${SYSTEM_PROMPT}${departmentContext}`;
 
+    // Filtra il contenuto della risposta per rimuovere i tag <ctrl>
+    const filterResponse = (content: string): string => {
+      // Rimuove tutto il contenuto tra <ctrl...> e </ctrl...>
+      return content.replace(/<ctrl\d+>.*?<\/ctrl\d+>/gs, '').trim();
+    };
+
     const payload = {
       model: 'deepseek-chat',
       messages: [
         {
           role: 'system',
-          content: `${enhancedPrompt}\n\nDATI DEGLI OBIETTIVI DA ANALIZZARE:\n${JSON.stringify(objectivesData, null, 2)}`
+          content: `${enhancedPrompt}\n\nIMPORTANTE: Non mostrare mai processi di calcolo interni, ragionamenti o contenuto tra tag <ctrl>. Fornisci solo l'output finale schematico.\n\nDATI DEGLI OBIETTIVI DA ANALIZZARE:\n${JSON.stringify(objectivesData, null, 2)}`
         },
         {
           role: 'user',
@@ -350,7 +275,6 @@ export default function AIChat({ isOpen, onClose, department }: AIDialogProps) {
     });
     setIsLoading(true);
 
-    // Crea il messaggio AI placeholder per streaming
     const aiMessageId = (Date.now() + 1).toString();
     const aiMessage: Message = {
       id: aiMessageId,
@@ -399,10 +323,12 @@ export default function AIChat({ isOpen, onClose, department }: AIDialogProps) {
               if (content) {
                 fullResponse += content;
                 
-                // Aggiorna il messaggio in streaming
+                // Filtra il contenuto rimuovendo i tag <ctrl>
+                const filteredContent = fullResponse.replace(/<ctrl\d+>.*?<\/ctrl\d+>/gs, '').trim();
+                
                 setMessages(prev => prev.map(msg => 
                   msg.id === aiMessageId 
-                    ? { ...msg, content: fullResponse, isStreaming: true }
+                    ? { ...msg, content: filteredContent, isStreaming: true }
                     : msg
                 ));
               }
@@ -413,11 +339,13 @@ export default function AIChat({ isOpen, onClose, department }: AIDialogProps) {
         }
       }
 
-      // Finalizza il messaggio
+      // Finalizza il messaggio con filtro finale
+      const finalFilteredContent = fullResponse.replace(/<ctrl\d+>.*?<\/ctrl\d+>/gs, '').trim();
+      
       setMessages(prev => {
         const newMessages = prev.map(msg => 
           msg.id === aiMessageId 
-            ? { ...msg, content: fullResponse, isStreaming: false }
+            ? { ...msg, content: finalFilteredContent, isStreaming: false }
             : msg
         );
         saveConversation(newMessages);
@@ -550,7 +478,27 @@ export default function AIChat({ isOpen, onClose, department }: AIDialogProps) {
                         em: ({ children }) => <em className="italic">{children}</em>,
                         h1: ({ children }) => <h1 className="text-lg font-bold mb-2 text-gray-900">{children}</h1>,
                         h2: ({ children }) => <h2 className="text-base font-bold mb-2 text-gray-900">{children}</h2>,
-                        h3: ({ children }) => <h3 className="text-sm font-bold mb-1 text-gray-900">{children}</h3>
+                        h3: ({ children }) => <h3 className="text-sm font-bold mb-1 text-gray-900">{children}</h3>,
+                        table: ({ children }) => (
+                          <div className="overflow-x-auto mb-4">
+                            <table className="min-w-full border-collapse border border-gray-300 text-xs">
+                              {children}
+                            </table>
+                          </div>
+                        ),
+                        thead: ({ children }) => <thead className="bg-gray-50">{children}</thead>,
+                        tbody: ({ children }) => <tbody>{children}</tbody>,
+                        tr: ({ children }) => <tr className="border-b border-gray-200">{children}</tr>,
+                        th: ({ children }) => (
+                          <th className="border border-gray-300 px-2 py-1 text-left font-medium text-gray-900 bg-gray-50">
+                            {children}
+                          </th>
+                        ),
+                        td: ({ children }) => (
+                          <td className="border border-gray-300 px-2 py-1 text-gray-700">
+                            {children}
+                          </td>
+                        )
                       }}
                     >
                       {message.content || (message.isStreaming ? '...' : '')}
