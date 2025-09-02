@@ -338,21 +338,44 @@ export default function AIChat({ isOpen, onClose, department }: AIDialogProps) {
 
     const enhancedPrompt = `${SYSTEM_PROMPT}${departmentContext}
 
-REGOLE DI FORMATTAZIONE AGGIUNTIVE:
-- Usa **grassetto** per enfatizzare informazioni importanti
-- Usa • (bullet points) per elenchi e dati strutturati
-- Per le intestazioni principali usa MAIUSCOLO + **grassetto**: **ANALISI OBIETTIVO**
-- Mantieni una struttura chiara e leggibile con spaziature appropriate
-- Usa emoji appropriate per gli status (✅ 🟢 🟡 ❌)
-- Struttura le risposte con bullet points per maggiore leggibilità
+REGOLE DI FORMATTAZIONE OBBLIGATORIE:
+
+**STRUTTURA GERARCHICA:**
+- Usa **grassetto** per intestazioni principali: **STATO GENERALE**, **OBIETTIVI IN RITARDO**, ecc.
+- Ogni bullet point DEVE essere su una nuova riga
+- Usa spaziatura doppia tra sezioni diverse
 - NON MOSTRARE MAI ID NUMERICI nelle risposte all'utente
+
+**FORMATTAZIONE BULLET POINTS:**
+- Ogni obiettivo deve essere su una riga separata
+- Formato: `• [Nome Obiettivo] [Target]: [Valore Attuale] ([Percentuale]) - [Spiegazione Status]`
+- Esempio corretto:
+```
+• Valore nuovi contratti 270.200€: 129.229€ (47,83%) - Mancano 140.971€
+
+• Incasso effettivo 178.000€: 69.057€ (38,8%) - Mancano 108.943€
+
+• Fatturato recurrent 17.280€: 9.759€ (56,48%) - Mancano 7.521€
+```
+
+**SPIEGAZIONI OBIETTIVI IN RITARDO:**
+Per ogni obiettivo in ritardo, DEVI spiegare:
+1. **Cos'è l'obiettivo** (cosa misura/rappresenta)
+2. **Perché è importante** per il business
+3. **Cosa significa essere in ritardo** (impatto/conseguenze)
+4. **Quanto manca per raggiungerlo**
+
+**EMOJI E STATUS:**
+- ✅ Obiettivi raggiunti/completati
+- 🟢 Obiettivi in corso (70-99%)
+- 🟡 Obiettivi in ritardo (sotto 70%)
+- ❌ Obiettivi non raggiunti/scaduti
 
 REGOLE SPECIFICHE PER OBIETTIVI DI MANTENIMENTO:
 - NON usare termini come "progresso" o "avanzamento" 
 - Usa "performance di mantenimento" o "conformità al target"
 - Analizza ogni mese singolarmente: "Il valore di [mese] ([valore]) [rispetta/supera/è sotto] il target del [target]"
-- Evidenzia i mesi che non rispettano il target con emoji appropriate
-- Esempio: "• Giugno 2025: 7% ❌ (supera il target del 5%)"`;
+- Evidenzia i mesi che non rispettano il target con emoji appropriate`;
 
     const payload = {
       model: 'deepseek-chat',
