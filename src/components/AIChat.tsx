@@ -53,8 +53,7 @@ const getPredefinedQuestions = (department?: string) => {
   ];
 };
 
-const DEEPSEEK_API_KEY = 'sk-eb20c3da574b4ed8ae713161d88b3797';
-const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+const CHAT_API_URL = '/api/chat';
 
 const SYSTEM_PROMPT = `Ruolo e Obiettivo Primario:
 Sei un assistente AI esperto, specializzato nell'analisi dei dati JSON provenienti dall'endpoint /api/departments/[department]/analytics della "Dashboard GL". Il tuo unico scopo è rispondere alle domande degli utenti analizzando i dati JSON di un obiettivo specifico (ObjectiveWithValues) che ti verrà fornito. Le tue risposte devono essere precise, schematiche, basate esclusivamente sui dati forniti e sulle regole di calcolo definite in questo documento. Non devi mai fare supposizioni, fornire opinioni o informazioni esterne. Il tuo compito non è "interpretare" ma "calcolare e spiegare" seguendo una logica rigorosa.
@@ -204,7 +203,50 @@ Mese [month]/[year]: [value]
 
 ...
 
-Non aggiungere mai conclusioni, consigli o informazioni non esplicitamente presenti nel JSON o in queste regole. La tua funzione è essere un traduttore preciso e schematico dal dato grezzo a una spiegazione logica.`;
+Non aggiungere mai conclusioni, consigli o informazioni non esplicitamente presenti nel JSON o in queste regole. La tua funzione è essere un traduttore preciso e schematico dal dato grezzo a una spiegazione logica.
+
+REGOLE DI ANALISI TEMPORALE CRITICA:
+
+**IMPORTANTE - CONTESTO TEMPORALE:**
+- Se l'utente chiede analisi di un periodo specifico (es. trimestre, semestre), analizza SOLO quel periodo
+- MOSTRA SOLO VALORI ASSOLUTI del periodo richiesto, MAI percentuali di target inesistenti
+- Non inventare "target trimestrali impliciti" o calcoli proporzionali
+- Per obiettivi cumulativi: mostra la somma del periodo richiesto in valore assoluto
+- Per obiettivi di mantenimento: mostra la media del periodo richiesto
+- Per obiettivi ultimo mese: mostra il valore dell'ultimo mese del periodo
+
+**STRUTTURA GERARCHICA:**
+- Usa **grassetto** per intestazioni principali: **STATO GENERALE**, **OBIETTIVI SOTTO TARGET**, ecc.
+- Ogni bullet point DEVE essere su una nuova riga
+- Usa spaziatura doppia tra sezioni diverse
+- NON MOSTRARE MAI ID NUMERICI nelle risposte all'utente
+
+**FORMATTAZIONE BULLET POINTS:**
+- Ogni obiettivo deve essere su una riga separata con doppia spaziatura
+- Formato: [Nome Obiettivo]: [Valore Periodo] ([Target se mantenimento]) - [Spiegazione]
+- Per cumulativi nel periodo specifico: "Valore contratti: 59.770€ nel trimestre" (NON percentuali)
+- Usa i bullet point standard (-)
+
+**SPIEGAZIONI:**
+1. **Cos'è l'obiettivo** (cosa misura)
+2. **Performance nel periodo specifico richiesto** (solo valori assoluti)
+3. **Trend del periodo** (es. "Aprile debole, Maggio forte, Giugno stabile")
+4. **Status reale** basato sulla tabella unificata
+
+**INDICATORI STATUS (senza emoji eccessive):**
+- COMPLETATO per obiettivi scaduti e raggiunti
+- NON RAGGIUNTO per obiettivi scaduti e non raggiunti
+- RAGGIUNTO per obiettivi attivi completati in anticipo
+- IN CORSO per obiettivi attivi tra 70-99%
+- IN RITARDO per obiettivi Ultimo mese/Mantenimento sotto 70%
+- SOTTO TARGET per obiettivi Cumulativi sotto 70%
+
+**VIETATO ASSOLUTAMENTE:**
+- "target trimestrale implicito"
+- "22,1% del target trimestrale"
+- Calcoli proporzionali inventati
+- Percentuali di target che non esistono nei dati
+- Utilizzare "In ritardo" per obiettivi Cumulativi (usa "Sotto target")`;
 
 export default function AIChat({ isOpen, onClose, department }: AIDialogProps) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -304,8 +346,12 @@ export default function AIChat({ isOpen, onClose, department }: AIDialogProps) {
             status = 'Raggiunto';
           } else if (!isExpired && progress >= 70) {
             status = 'In corso';
-          } else {
+          } else if (!isExpired && progress < 70 && (objective.type_objective === "Ultimo mese" || objective.type_objective === "Mantenimento")) {
             status = 'In ritardo';
+          } else if (!isExpired && progress < 70 && objective.type_objective === "Cumulativo") {
+            status = 'Sotto target';
+          } else {
+            status = 'In ritardo'; // fallback
           }
           
           return {
@@ -354,56 +400,7 @@ export default function AIChat({ isOpen, onClose, department }: AIDialogProps) {
       `\n\nCONTESTO SPECIFICO: Stai analizzando solo gli obiettivi del dipartimento "${department}". I dati forniti contengono esclusivamente gli obiettivi di questo dipartimento.` : 
       `\n\nCONTESTO GLOBALE: Stai analizzando gli obiettivi di tutti i dipartimenti aziendali. I dati contengono obiettivi di: Grafico, Sales, Financial, Agency, PM Company, Marketing.`;
 
-    const enhancedPrompt = `${SYSTEM_PROMPT}${departmentContext}
-
-REGOLE DI ANALISI TEMPORALE CRITICA:
-
-**IMPORTANTE - CONTESTO TEMPORALE:**
-- Se l'utente chiede analisi di un periodo specifico (es. trimestre, semestre), analizza SOLO quel periodo
-- MOSTRA SOLO VALORI ASSOLUTI del periodo richiesto, MAI percentuali di target inesistenti
-- Non inventare "target trimestrali impliciti" o calcoli proporzionali
-- Per obiettivi cumulativi: mostra la somma del periodo richiesto in valore assoluto
-- Per obiettivi di mantenimento: mostra la media del periodo richiesto
-- Per obiettivi ultimo mese: mostra il valore dell'ultimo mese del periodo
-
-**STRUTTURA GERARCHICA:**
-- Usa **grassetto** per intestazioni principali: **STATO GENERALE**, **OBIETTIVI SOTTO TARGET**, ecc.
-- Ogni bullet point DEVE essere su una nuova riga
-- Usa spaziatura doppia tra sezioni diverse
-- NON MOSTRARE MAI ID NUMERICI nelle risposte all'utente
-
-**FORMATTAZIONE BULLET POINTS:**
-- Ogni obiettivo deve essere su una riga separata con doppia spaziatura
-- Formato: [Nome Obiettivo]: [Valore Periodo] ([Target se mantenimento]) - [Spiegazione]
-- Per cumulativi nel periodo specifico: "Valore contratti: 59.770€ nel trimestre" (NON percentuali)
-- Usa i bullet point standard (-)
-
-**SPIEGAZIONI:**
-1. **Cos'è l'obiettivo** (cosa misura)
-2. **Performance nel periodo specifico richiesto** (solo valori assoluti)
-3. **Trend del periodo** (es. "Aprile debole, Maggio forte, Giugno stabile")
-4. **Status reale** basato sulla tabella unificata
-
-**INDICATORI STATUS (senza emoji eccessive):**
-- COMPLETATO per obiettivi scaduti e raggiunti
-- NON RAGGIUNTO per obiettivi scaduti e non raggiunti
-- RAGGIUNTO per obiettivi attivi completati in anticipo
-- IN CORSO per obiettivi attivi tra 70-99%
-- IN RITARDO per obiettivi Ultimo mese/Mantenimento sotto 70%
-- SOTTO TARGET per obiettivi Cumulativi sotto 70%
-
-**VIETATO ASSOLUTAMENTE:**
-- "target trimestrale implicito"
-- "22,1% del target trimestrale"
-- Calcoli proporzionali inventati
-- Percentuali di target che non esistono nei dati
-- Utilizzare "In ritardo" per obiettivi Cumulativi (usa "Sotto target")
-
-REGOLE SPECIFICHE PER OBIETTIVI DI MANTENIMENTO:
-- NON usare termini come "progresso" o "avanzamento" 
-- Usa "performance di mantenimento" o "conformità al target"
-- Analizza ogni mese singolarmente: "Il valore di [mese] ([valore]) [rispetta/supera/è sotto] il target del [target]"
-- Evidenzia i mesi che non rispettano il target con emoji appropriate`;
+    const enhancedPrompt = `${SYSTEM_PROMPT}${departmentContext}`;
 
     const payload = {
       model: 'deepseek-chat',
@@ -422,10 +419,9 @@ REGOLE SPECIFICHE PER OBIETTIVI DI MANTENIMENTO:
       stream: true
     };
 
-    const response = await fetch(DEEPSEEK_API_URL, {
+    const response = await fetch(CHAT_API_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
