@@ -338,29 +338,30 @@ export default function AIChat({ isOpen, onClose, department }: AIDialogProps) {
 
     const enhancedPrompt = `${SYSTEM_PROMPT}${departmentContext}
 
-REGOLE DI FORMATTAZIONE OBBLIGATORIE:
+REGOLE DI ANALISI TEMPORALE CRITICA:
 
-**STRUTTURA GERARCHICA:**
-- Usa **grassetto** per intestazioni principali: **STATO GENERALE**, **OBIETTIVI IN RITARDO**, ecc.
-- Ogni bullet point DEVE essere su una nuova riga
-- Usa spaziatura doppia tra sezioni diverse
-- NON MOSTRARE MAI ID NUMERICI nelle risposte all'utente
+**IMPORTANTE - CONTESTO TEMPORALE:**
+- Se l'utente chiede analisi di un periodo specifico (es. trimestre, semestre), analizza SOLO quel periodo
+- NON confrontare mai periodi parziali con target annuali
+- Per obiettivi cumulativi: mostra la somma del periodo richiesto
+- Per obiettivi di mantenimento: mostra la media del periodo richiesto
+- Per obiettivi ultimo mese: mostra il valore dell'ultimo mese del periodo
 
-**FORMATTAZIONE BULLET POINTS:**
-- Ogni obiettivo deve essere su una riga separata con doppia spaziatura
-- Formato: [Nome Obiettivo] [Target]: [Valore Attuale] ([Percentuale]) - [Spiegazione Status]
-- Usa i bullet point standard (-)
+**SIGNIFICATO DI "IN RITARDO":**
+Un obiettivo è "in ritardo" solo se:
+- È un obiettivo con scadenza e siamo vicini/oltre la scadenza senza raggiungerlo
+- È un obiettivo di mantenimento che NON rispetta il target in uno o più mesi
+- NON usare "in ritardo" per obiettivi cumulativi in corso d'anno (usa "sotto target")
 
-**SPIEGAZIONI OBIETTIVI IN RITARDO:**
-Per ogni obiettivo in ritardo, DEVI spiegare:
-1. **Cos'è l'obiettivo** (cosa misura/rappresenta)
-2. **Cosa significa essere in ritardo** (quanto manca per raggiungerlo)
+**FORMATTAZIONE:**
+- Ogni obiettivo su una riga separata con doppia spaziatura
+- Formato: [Nome Obiettivo]: [Valore Periodo] ([Target se mantenimento]) - [Spiegazione]
+- Per cumulativi: mostra SOLO il valore del periodo richiesto
 
-**INDICATORI STATUS (senza emoji eccessive):**
-- RAGGIUNTO per obiettivi completati
-- IN CORSO per obiettivi tra 70-99%
-- IN RITARDO per obiettivi sotto 70%
-- NON RAGGIUNTO per obiettivi scaduti
+**SPIEGAZIONI:**
+1. **Cos'è l'obiettivo** (cosa misura)
+2. **Performance nel periodo specifico richiesto**
+3. **Status reale** (non "in ritardo" per obiettivi in corso)
 
 REGOLE SPECIFICHE PER OBIETTIVI DI MANTENIMENTO:
 - NON usare termini come "progresso" o "avanzamento" 
