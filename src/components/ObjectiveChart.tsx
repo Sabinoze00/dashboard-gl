@@ -1,30 +1,33 @@
 'use client';
 
-import { 
-  Chart as ChartJS, 
-  CategoryScale, 
-  LinearScale, 
-  BarElement, 
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
   BarController,
-  LineElement, 
+  LineElement,
   LineController,
-  Title, 
-  Tooltip, 
-  Legend, 
-  PointElement 
+  Title,
+  Tooltip,
+  Legend,
+  PointElement
 } from 'chart.js';
 import { Chart } from 'react-chartjs-2';
 import { useState } from 'react';
 import { ObjectiveWithValues, ObjectiveType } from '@/lib/types';
 import { formatNumber } from '@/lib/formatters';
+import { PeriodSelection } from './PeriodSelector';
+import { calculateCurrentValueForPeriod, calculateProgressForPeriod } from '@/lib/period-filter';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, BarController, LineElement, LineController, Title, Tooltip, Legend, PointElement);
 
 interface ObjectiveChartProps {
   objective: ObjectiveWithValues;
+  selectedPeriod?: PeriodSelection;
 }
 
-export default function ObjectiveChart({ objective }: ObjectiveChartProps) {
+export default function ObjectiveChart({ objective, selectedPeriod }: ObjectiveChartProps) {
   const [chartType, setChartType] = useState<'bar' | 'line'>('bar');
   const [viewMode, setViewMode] = useState<'monthly' | 'quarterly'>('monthly');
 
@@ -259,20 +262,29 @@ export default function ObjectiveChart({ objective }: ObjectiveChartProps) {
     },
   };
 
-  // Calculate current progress
+  // Calculate current progress using selected period
   const getCurrentProgress = () => {
-    if (viewMode === 'monthly') {
-      const currentMonth = Math.min(new Date().getMonth() + 1, 12);
-      const currentValue = values[currentMonth - 1] || 0;
-      const currentTarget = targets[currentMonth - 1] || 0;
-      return { currentValue, currentTarget, progress: currentTarget > 0 ? ((currentValue / currentTarget) * 100) : 0 };
+    if (selectedPeriod) {
+      // Use the selected period for calculation
+      const currentValue = calculateCurrentValueForPeriod(objective, selectedPeriod);
+      const currentTarget = objective.target_numeric;
+      const progress = calculateProgressForPeriod(objective, selectedPeriod);
+      return { currentValue, currentTarget, progress };
     } else {
-      // Quarterly view - get current quarter
-      const currentMonth = new Date().getMonth() + 1;
-      const currentQuarter = Math.ceil(currentMonth / 3) - 1; // 0-based
-      const currentValue = values[currentQuarter] || 0;
-      const currentTarget = targets[currentQuarter] || 0;
-      return { currentValue, currentTarget, progress: currentTarget > 0 ? ((currentValue / currentTarget) * 100) : 0 };
+      // Fallback to current month/quarter
+      if (viewMode === 'monthly') {
+        const currentMonth = Math.min(new Date().getMonth() + 1, 12);
+        const currentValue = values[currentMonth - 1] || 0;
+        const currentTarget = targets[currentMonth - 1] || 0;
+        return { currentValue, currentTarget, progress: currentTarget > 0 ? ((currentValue / currentTarget) * 100) : 0 };
+      } else {
+        // Quarterly view - get current quarter
+        const currentMonth = new Date().getMonth() + 1;
+        const currentQuarter = Math.ceil(currentMonth / 3) - 1; // 0-based
+        const currentValue = values[currentQuarter] || 0;
+        const currentTarget = targets[currentQuarter] || 0;
+        return { currentValue, currentTarget, progress: currentTarget > 0 ? ((currentValue / currentTarget) * 100) : 0 };
+      }
     }
   };
 

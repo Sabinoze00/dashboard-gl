@@ -355,7 +355,7 @@ export default function DepartmentDashboard({ department }: DepartmentDashboardP
                 <h2 className="text-2xl font-bold text-gray-900 mb-8">Grafici Andamento</h2>
                 <div className="grid grid-cols-fluid-480 gap-8 max-w-none">
                   {filteredObjectives.map((objective) => (
-                    <ObjectiveChart key={objective.id} objective={objective} />
+                    <ObjectiveChart key={objective.id} objective={objective} selectedPeriod={selectedPeriod} />
                   ))}
                 </div>
               </section>
