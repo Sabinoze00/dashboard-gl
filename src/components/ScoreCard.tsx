@@ -4,20 +4,22 @@ import { useState } from 'react';
 import { ObjectiveWithValues } from '@/lib/types';
 import { formatNumber } from '@/lib/formatters';
 import { calculateObjectiveProgress, getProgressColor, getProgressTextColor, getProgressBgColor } from '@/lib/progress-calculator';
+import { PeriodSelection } from './PeriodSelector';
 
 interface ScoreCardProps {
   objective: ObjectiveWithValues;
   onObjectiveUpdate?: (objectiveId: number, updates: { objective_smart?: string; target_numeric?: number; objective_name?: string; reverse_logic?: boolean }) => void;
+  selectedPeriod?: PeriodSelection;
 }
 
-export default function ScoreCard({ objective, onObjectiveUpdate }: ScoreCardProps) {
+export default function ScoreCard({ objective, onObjectiveUpdate, selectedPeriod }: ScoreCardProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingTarget, setIsEditingTarget] = useState(false);
   const [editTitle, setEditTitle] = useState(objective.objective_name || objective.objective_smart);
   const [editTarget, setEditTarget] = useState(objective.target_numeric.toString());
   const [lastClickTime, setLastClickTime] = useState<{[key: string]: number}>({});
-  // Use the new progress calculator
-  const progressResult = calculateObjectiveProgress(objective);
+  // Use the new progress calculator with selected period
+  const progressResult = calculateObjectiveProgress(objective, selectedPeriod);
   const { currentValue, progress, status, isExpired, daysUntilExpiry } = progressResult;
   const targetValue = objective.target_numeric;
   

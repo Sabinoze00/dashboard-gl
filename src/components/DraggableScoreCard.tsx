@@ -4,13 +4,15 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ObjectiveWithValues } from '@/lib/types';
 import ScoreCard from './ScoreCard';
+import { PeriodSelection } from './PeriodSelector';
 
 interface DraggableScoreCardProps {
   objective: ObjectiveWithValues;
   onObjectiveUpdate?: (objectiveId: number, updates: { objective_smart?: string; target_numeric?: number; reverse_logic?: boolean }) => void;
+  selectedPeriod?: PeriodSelection;
 }
 
-export default function DraggableScoreCard({ objective, onObjectiveUpdate }: DraggableScoreCardProps) {
+export default function DraggableScoreCard({ objective, onObjectiveUpdate, selectedPeriod }: DraggableScoreCardProps) {
   const {
     attributes,
     listeners,
@@ -39,9 +41,10 @@ export default function DraggableScoreCard({ objective, onObjectiveUpdate }: Dra
     >
       {/* Score Card with integrated drag handle */}
       <div className="relative">
-        <ScoreCard 
-          objective={objective} 
+        <ScoreCard
+          objective={objective}
           onObjectiveUpdate={onObjectiveUpdate}
+          selectedPeriod={selectedPeriod}
         />
         {/* Drag Handle - visible on hover */}
         <div

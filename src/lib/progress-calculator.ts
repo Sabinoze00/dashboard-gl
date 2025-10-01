@@ -1,4 +1,6 @@
 import { ObjectiveWithValues, ObjectiveType } from './types';
+import { PeriodSelection } from '@/components/PeriodSelector';
+import { calculateCurrentValueForPeriod } from './period-filter';
 
 export interface ProgressResult {
   progress: number;
@@ -9,38 +11,44 @@ export interface ProgressResult {
   daysUntilExpiry: number;
 }
 
-export const calculateObjectiveProgress = (objective: ObjectiveWithValues): ProgressResult => {
+export const calculateObjectiveProgress = (objective: ObjectiveWithValues, period?: PeriodSelection): ProgressResult => {
   const currentMonth = new Date().getMonth() + 1; // 1-12
   const currentYear = new Date().getFullYear();
   const today = new Date();
-  
+
   // Check if objective is expired
   const endDate = new Date(objective.end_date);
   const isExpired = endDate < today;
   const daysUntilExpiry = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  
+
   let currentValue = 0;
   let progress = 0;
   let isOnTrack = false;
 
   // Get current value based on objective type
-  if (objective.type_objective === 'Cumulativo') {
-    // Sum all values up to current month
-    currentValue = objective.values
-      .filter(v => v.year === currentYear && v.month <= currentMonth)
-      .reduce((sum, v) => sum + v.value, 0);
-  } else if (objective.type_objective === 'Ultimo mese') {
-    // Only the last month matters
-    const lastValue = objective.values
-      .filter(v => v.year === currentYear)
-      .sort((a, b) => b.month - a.month)[0];
-    currentValue = lastValue?.value || 0;
+  if (period) {
+    // Use period-based calculation
+    currentValue = calculateCurrentValueForPeriod(objective, period);
   } else {
-    // Mantenimento - average of values
-    const values = objective.values
-      .filter(v => v.year === currentYear && v.month <= currentMonth);
-    if (values.length > 0) {
-      currentValue = values.reduce((sum, v) => sum + v.value, 0) / values.length;
+    // Use default calculation (current year and month)
+    if (objective.type_objective === 'Cumulativo') {
+      // Sum all values up to current month
+      currentValue = objective.values
+        .filter(v => v.year === currentYear && v.month <= currentMonth)
+        .reduce((sum, v) => sum + v.value, 0);
+    } else if (objective.type_objective === 'Ultimo mese') {
+      // Only the last month matters
+      const lastValue = objective.values
+        .filter(v => v.year === currentYear)
+        .sort((a, b) => b.month - a.month)[0];
+      currentValue = lastValue?.value || 0;
+    } else {
+      // Mantenimento - average of values
+      const values = objective.values
+        .filter(v => v.year === currentYear && v.month <= currentMonth);
+      if (values.length > 0) {
+        currentValue = values.reduce((sum, v) => sum + v.value, 0) / values.length;
+      }
     }
   }
 

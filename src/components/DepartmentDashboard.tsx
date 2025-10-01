@@ -337,10 +337,11 @@ export default function DepartmentDashboard({ department }: DepartmentDashboardP
                 <SortableContext items={filteredObjectives.map(obj => obj.id.toString())} strategy={rectSortingStrategy}>
                   <div className="grid grid-cols-fluid-320 gap-8 max-w-none">
                     {filteredObjectives.map((objective) => (
-                      <DraggableScoreCard 
-                        key={objective.id} 
-                        objective={objective} 
+                      <DraggableScoreCard
+                        key={objective.id}
+                        objective={objective}
                         onObjectiveUpdate={handleObjectiveUpdate}
+                        selectedPeriod={selectedPeriod}
                       />
                     ))}
                   </div>
