@@ -380,22 +380,8 @@ export default function ObjectiveChart({ objective, selectedPeriod }: ObjectiveC
         </div>
 
         {/* Chart */}
-        <div className="h-80 mb-6">
+        <div className="h-80">
           <Chart type="bar" data={data} options={options} />
-        </div>
-        
-        {/* Footer Stats */}
-        <div className="pt-6 border-t border-gray-50">
-          <div className="flex justify-between items-center">
-            <div className="text-left">
-              <div className="text-sm text-brand-text font-medium mb-1">Progresso Attuale</div>
-              <div className="text-2xl font-bold text-gray-900">{progress.toFixed(1)}%</div>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-brand-text font-medium mb-1">Target</div>
-              <div className="text-2xl font-bold text-gray-700">{formatNumber(currentTarget, objective.number_format || 'number')}</div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
