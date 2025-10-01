@@ -327,14 +327,17 @@ export default function ScoreCard({ objective, onObjectiveUpdate, selectedPeriod
               </span>
             </span>
           </div>
-          {objective.reverse_logic && (
-            <div className="text-xs text-gray-500 mt-1">
-              {currentValue <= targetValue 
-                ? '✅ Sotto il target - ottimo!' 
+          <div className="text-xs text-gray-500 mt-1">
+            {objective.reverse_logic ? (
+              currentValue <= targetValue
+                ? '✅ Sotto il target - ottimo!'
                 : '⚠️ Sopra il target - da migliorare'
-              }
-            </div>
-          )}
+            ) : (
+              currentValue >= targetValue
+                ? '✅ Sopra il target - ottimo!'
+                : '⚠️ Sotto il target - da migliorare'
+            )}
+          </div>
         </div>
       </div>
     </div>

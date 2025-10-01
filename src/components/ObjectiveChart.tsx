@@ -299,23 +299,32 @@ export default function ObjectiveChart({ objective, selectedPeriod }: ObjectiveC
             <h3 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-brand-primary transition-colors duration-200" title={objective.objective_smart}>
               {objective.objective_name || objective.objective_smart}
             </h3>
-            <div className="flex items-center space-x-3">
-              <span className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                objective.type_objective === 'Cumulativo' 
-                  ? 'bg-blue-50 text-blue-600'
+            <div className="space-y-2">
+              <div className="flex items-center space-x-3">
+                <span className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                  objective.type_objective === 'Cumulativo'
+                    ? 'bg-blue-50 text-blue-600'
+                    : objective.type_objective === 'Mantenimento'
+                    ? 'bg-pink-50 text-brand-primary'
+                    : 'bg-orange-50 text-brand-secondary'
+                }`}>
+                  {objective.type_objective}
+                </span>
+                <span className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                  progress >= 100
+                    ? 'bg-pink-50 text-brand-primary'
+                    : 'bg-orange-50 text-brand-secondary'
+                }`}>
+                  {progress >= 100 ? 'Raggiunto' : 'In corso'}
+                </span>
+              </div>
+              <div className="text-xs text-gray-500 italic">
+                {objective.type_objective === 'Cumulativo'
+                  ? '📊 Valore calcolato: somma progressiva dei valori mensili'
                   : objective.type_objective === 'Mantenimento'
-                  ? 'bg-pink-50 text-brand-primary'  
-                  : 'bg-orange-50 text-brand-secondary'
-              }`}>
-                {objective.type_objective}
-              </span>
-              <span className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                progress >= 100 
-                  ? 'bg-pink-50 text-brand-primary'
-                  : 'bg-orange-50 text-brand-secondary'
-              }`}>
-                {progress >= 100 ? 'Raggiunto' : 'In corso'}
-              </span>
+                  ? '📊 Valore calcolato: media dei valori nel periodo selezionato'
+                  : '📊 Valore calcolato: ultimo valore del periodo selezionato'}
+              </div>
             </div>
           </div>
           
