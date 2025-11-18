@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Bash(rm:*)",
+      "Bash(move:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(copy \"C:\\Users\\sabin\\Downloads\\Dashboard GL\\dashboard-gl\\immagini\\logo.png\" \"C:\\Users\\sabin\\Downloads\\Dashboard GL\\dashboard-gl\\public\\logo.png\")",
+      "Bash(sqlite3:*)",
+      "Bash(powershell:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(git filter-branch:*)",
+      "Bash(git rm:*)",
+      "Bash(git add:*)",
+      "Bash(npx vercel:*)",
+      "Bash(git commit:*)",
+      "Bash(find:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

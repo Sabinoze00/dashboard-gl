@@ -1,0 +1,197 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import 'ag-grid-community/styles/ag-grid.css';
+@import 'ag-grid-community/styles/ag-theme-alpine.css';
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+
+:root {
+  /* Brand Colors */
+  --brand-primary: #E2045B;
+  --brand-secondary: #FF992C;
+  --brand-text: #8A8A93;
+  --brand-accent: #0D0F1000;
+  --brand-blue: #00A6FB;
+  --brand-white: #FFFFFF;
+  --brand-black: #000000;
+  --brand-background: #FDF7F2;
+  --brand-success: #05BC44;
+  
+  /* Legacy variables for compatibility */
+  --background: #FDF7F2;
+  --foreground: #8A8A93;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #FDF7F2;
+    --foreground: #8A8A93;
+  }
+}
+
+body {
+  color: var(--brand-text);
+  background: var(--brand-background);
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  font-variation-settings: "wght" 400, "opsz" 14;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  font-variation-settings: "wght" 600, "opsz" 14;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Modern AG Grid Styling */
+.ag-theme-alpine {
+  --ag-font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  --ag-font-size: 14px;
+  --ag-header-font-weight: 600;
+  --ag-header-font-size: 14px;
+  
+  /* Colors aligned with brand */
+  --ag-header-background-color: #FAFAFA;
+  --ag-header-foreground-color: #374151;
+  --ag-odd-row-background-color: #FEFEFE;
+  --ag-row-background-color: #FFFFFF;
+  --ag-row-hover-color: rgba(226, 4, 91, 0.05);
+  --ag-selected-row-background-color: rgba(226, 4, 91, 0.1);
+  
+  /* Borders and lines */
+  --ag-border-color: #F3F4F6;
+  --ag-secondary-border-color: #E5E7EB;
+  --ag-header-column-separator-color: #E5E7EB;
+  --ag-row-border-color: #F9FAFB;
+  
+  /* Grid styling */
+  --ag-borders: solid 1px;
+  --ag-border-radius: 12px;
+  --ag-wrapper-border-radius: 12px;
+  
+  /* Cell padding */
+  --ag-cell-horizontal-padding: 16px;
+  --ag-header-height: 48px;
+  --ag-row-height: 44px;
+  
+  /* Focus and selection */
+  --ag-range-selection-border-color: var(--brand-primary);
+  --ag-range-selection-background-color: rgba(226, 4, 91, 0.05);
+  --ag-range-selection-highlight-color: rgba(226, 4, 91, 0.1);
+  
+  /* Input styling */
+  --ag-input-focus-border-color: var(--brand-primary);
+  --ag-checkbox-checked-color: var(--brand-primary);
+}
+
+/* Custom overrides for modern look */
+.ag-theme-alpine .ag-header {
+  border-bottom: 2px solid #F3F4F6;
+}
+
+.ag-theme-alpine .ag-header-cell {
+  border-right: 1px solid #E5E7EB;
+  color: #374151;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.ag-theme-alpine .ag-header-cell:hover {
+  background-color: #F9FAFB;
+}
+
+.ag-theme-alpine .ag-cell {
+  border-right: 1px solid #F9FAFB;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.ag-theme-alpine .ag-row {
+  border-bottom: 1px solid #F9FAFB;
+}
+
+.ag-theme-alpine .ag-row:hover {
+  background-color: rgba(226, 4, 91, 0.02) !important;
+}
+
+.ag-theme-alpine .ag-row-selected {
+  background-color: rgba(226, 4, 91, 0.05) !important;
+}
+
+.ag-theme-alpine .ag-cell-focus,
+.ag-theme-alpine .ag-cell-no-focus {
+  border: 2px solid var(--brand-primary) !important;
+  border-radius: 4px;
+}
+
+/* Modern buttons and inputs */
+.ag-theme-alpine input[type="text"],
+.ag-theme-alpine input[type="number"],
+.ag-theme-alpine select {
+  font-family: 'DM Sans', sans-serif;
+  border-radius: 8px;
+  border: 1px solid #D1D5DB;
+  padding: 8px 12px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.ag-theme-alpine input[type="text"]:focus,
+.ag-theme-alpine input[type="number"]:focus,
+.ag-theme-alpine select:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(226, 4, 91, 0.1);
+}
+
+/* Pagination styling */
+.ag-theme-alpine .ag-paging-panel {
+  border-top: 1px solid #E5E7EB;
+  background-color: #FAFAFA;
+  padding: 12px 16px;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.ag-theme-alpine .ag-paging-button {
+  background-color: transparent;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  padding: 6px 12px;
+  margin: 0 2px;
+  color: #374151;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.ag-theme-alpine .ag-paging-button:hover {
+  background-color: var(--brand-primary);
+  color: white;
+  border-color: var(--brand-primary);
+}
+
+.ag-theme-alpine .ag-paging-button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ag-theme-alpine .ag-paging-button[disabled]:hover {
+  background-color: transparent;
+  color: #9CA3AF;
+  border-color: #D1D5DB;
+}

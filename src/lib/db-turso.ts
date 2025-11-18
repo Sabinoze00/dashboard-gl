@@ -1,0 +1,640 @@
+import { createClient } from '@libsql/client';
+
+// Database configuration for Turso
+const tursoUrl = process.env.TURSO_DATABASE_URL || 'libsql://dashboard-gl-sabinoze00.aws-eu-west-1.turso.io';
+const tursoAuthToken = process.env.TURSO_AUTH_TOKEN || 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NTYzOTYxNTAsImlkIjoiYWZhOTRjNGYtNTYwOS00MDA5LTkzYTUtZTQyM2JiYTM5OTA0IiwicmlkIjoiMDJjMmIwNDctNmJkYS00ZmIxLWE0NDYtMmMxODc4MGM0MjgxIn0.JZqzKq92Yhp8_E7D9JSmp4Vds9r3adZHZQe3HsgUjf2AATFgqEgRm9CkefFYIMasi6tg9LKtoPr5sx26d71_Ag';
+
+console.log('🚀 Turso config:');
+console.log('URL:', tursoUrl);
+console.log('Token exists:', !!tursoAuthToken);
+
+// Create Turso client
+const db = createClient({
+  url: tursoUrl,
+  authToken: tursoAuthToken,
+});
+
+// Create tables for Turso
+const createTables = async () => {
+  try {
+    // Enable foreign key constraints
+    await db.execute('PRAGMA foreign_keys = ON');
+
+    // Objectives table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS objectives (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        department TEXT NOT NULL CHECK (department IN ('Grafico', 'Sales', 'Financial', 'Agency', 'PM Company', 'Marketing')),
+        objective_smart TEXT NOT NULL,
+        type_objective TEXT NOT NULL CHECK (type_objective IN ('Mantenimento', 'Cumulativo', 'Ultimo mese')),
+        target_numeric DECIMAL NOT NULL,
+        number_format TEXT DEFAULT 'number' CHECK (number_format IN ('number', 'currency', 'percentage', 'decimal')),
+        start_date DATE NOT NULL,
+        end_date DATE NOT NULL,
+        objective_name TEXT,
+        order_index INTEGER DEFAULT 0,
+        reverse_logic BOOLEAN DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Objective values table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS objective_values (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        objective_id INTEGER NOT NULL,
+        month INTEGER NOT NULL CHECK (month BETWEEN 1 AND 12),
+        year INTEGER NOT NULL,
+        value DECIMAL NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (objective_id) REFERENCES objectives(id) ON DELETE CASCADE,
+        UNIQUE(objective_id, month, year)
+      )
+    `);
+
+    console.log('Turso tables created successfully');
+  } catch (error) {
+    console.error('Error creating Turso tables:', error);
+    throw error;
+  }
+};
+
+// Initialize database only in production or when explicitly requested
+if (process.env.NODE_ENV === 'production' || process.env.INIT_TURSO_DB === 'true') {
+  createTables().catch(console.error);
+}
+
+export default db;
+
+// Database helper functions adapted for Turso
+export const getObjectivesByDepartment = async (department: string) => {
+  try {
+    // Get objectives
+    const objectivesResult = await db.execute({
+      sql: `SELECT * FROM objectives WHERE department = ? ORDER BY order_index ASC, created_at DESC`,
+      args: [department]
+    });
+    
+    const objectives = objectivesResult.rows;
+    
+    // Get values for each objective
+    const enrichedObjectives = await Promise.all(
+      objectives.map(async (objective) => {
+        const valuesResult = await db.execute({
+          sql: `SELECT * FROM objective_values WHERE objective_id = ? ORDER BY year, month`,
+          args: [objective.id]
+        });
+        
+        return {
+          ...objective,
+          values: valuesResult.rows
+        };
+      })
+    );
+    
+    return enrichedObjectives;
+  } catch (error) {
+    console.error('Error fetching objectives by department:', error);
+    throw error;
+  }
+};
+
+export const getObjectiveValues = async (objectiveId: number) => {
+  try {
+    const result = await db.execute({
+      sql: `SELECT * FROM objective_values WHERE objective_id = ? ORDER BY year, month`,
+      args: [objectiveId]
+    });
+    return result.rows;
+  } catch (error) {
+    console.error('Error fetching objective values:', error);
+    throw error;
+  }
+};
+
+export const createObjective = async (objective: {
+  department: string;
+  objective_name?: string;
+  objective_smart: string;
+  type_objective: string;
+  target_numeric: number;
+  number_format?: string;
+  start_date: string;
+  end_date: string;
+  order_index?: number;
+  reverse_logic?: boolean;
+}) => {
+  try {
+    const result = await db.execute({
+      sql: `
+        INSERT INTO objectives (department, objective_name, objective_smart, type_objective, target_numeric, number_format, start_date, end_date, order_index, reverse_logic)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      args: [
+        objective.department,
+        objective.objective_name || null,
+        objective.objective_smart,
+        objective.type_objective,
+        objective.target_numeric,
+        objective.number_format || 'number',
+        objective.start_date,
+        objective.end_date,
+        objective.order_index || 0,
+        objective.reverse_logic ? 1 : 0
+      ]
+    });
+    return { lastInsertRowid: result.lastInsertRowid };
+  } catch (error) {
+    console.error('Error creating objective:', error);
+    throw error;
+  }
+};
+
+export const updateObjectiveValue = async (objectiveId: number, month: number, year: number, value: number) => {
+  try {
+    const result = await db.execute({
+      sql: `
+        INSERT OR REPLACE INTO objective_values (objective_id, month, year, value)
+        VALUES (?, ?, ?, ?)
+      `,
+      args: [objectiveId, month, year, value]
+    });
+    return result;
+  } catch (error) {
+    console.error('Error updating objective value:', error);
+    throw error;
+  }
+};
+
+export const deleteObjective = async (id: number) => {
+  try {
+    const result = await db.execute({
+      sql: 'DELETE FROM objectives WHERE id = ?',
+      args: [id]
+    });
+    return result;
+  } catch (error) {
+    console.error('Error deleting objective:', error);
+    throw error;
+  }
+};
+
+export const deleteObjectives = async (ids: number[]) => {
+  try {
+    const placeholders = ids.map(() => '?').join(',');
+    const result = await db.execute({
+      sql: `DELETE FROM objectives WHERE id IN (${placeholders})`,
+      args: ids
+    });
+    return result;
+  } catch (error) {
+    console.error('Error deleting objectives:', error);
+    throw error;
+  }
+};
+
+export const updateObjectiveOrder = async (objectiveId: number, newOrderIndex: number) => {
+  try {
+    const result = await db.execute({
+      sql: 'UPDATE objectives SET order_index = ? WHERE id = ?',
+      args: [newOrderIndex, objectiveId]
+    });
+    return result;
+  } catch (error) {
+    console.error('Error updating objective order:', error);
+    throw error;
+  }
+};
+
+export const reorderObjectives = async (department: string, orderedIds: number[]) => {
+  try {
+    // Turso doesn't support transactions in the same way as better-sqlite3
+    // We'll execute the updates sequentially
+    const results = [];
+    for (let i = 0; i < orderedIds.length; i++) {
+      const result = await updateObjectiveOrder(orderedIds[i], i);
+      results.push(result);
+    }
+    return results;
+  } catch (error) {
+    console.error('Error reordering objectives:', error);
+    throw error;
+  }
+};
+
+// Update objective function for Turso
+export const updateObjective = async (
+  id: number,
+  updates: {
+    objective_smart?: string;
+    objective_name?: string;
+    type_objective?: string;
+    target_numeric?: number;
+    number_format?: string;
+    start_date?: string;
+    end_date?: string;
+    reverse_logic?: boolean;
+    order_index?: number;
+  }
+) => {
+  try {
+    const updateFields = [];
+    const values = [];
+    
+    if (updates.objective_smart !== undefined) {
+      updateFields.push('objective_smart = ?');
+      values.push(updates.objective_smart);
+    }
+    
+    if (updates.objective_name !== undefined) {
+      updateFields.push('objective_name = ?');
+      values.push(updates.objective_name);
+    }
+    
+    if (updates.type_objective !== undefined) {
+      updateFields.push('type_objective = ?');
+      values.push(updates.type_objective);
+    }
+    
+    if (updates.target_numeric !== undefined) {
+      updateFields.push('target_numeric = ?');
+      values.push(updates.target_numeric);
+    }
+    
+    if (updates.number_format !== undefined) {
+      updateFields.push('number_format = ?');
+      values.push(updates.number_format);
+    }
+    
+    if (updates.start_date !== undefined) {
+      updateFields.push('start_date = ?');
+      values.push(updates.start_date);
+    }
+    
+    if (updates.end_date !== undefined) {
+      updateFields.push('end_date = ?');
+      values.push(updates.end_date);
+    }
+    
+    if (updates.reverse_logic !== undefined) {
+      updateFields.push('reverse_logic = ?');
+      values.push(updates.reverse_logic ? 1 : 0);
+    }
+    
+    if (updates.order_index !== undefined) {
+      updateFields.push('order_index = ?');
+      values.push(updates.order_index);
+    }
+    
+    if (updateFields.length === 0) {
+      throw new Error('No fields to update');
+    }
+    
+    values.push(id);
+    
+    const result = await db.execute({
+      sql: `UPDATE objectives SET ${updateFields.join(', ')} WHERE id = ?`,
+      args: values
+    });
+    
+    return { changes: result.rowsAffected };
+  } catch (error) {
+    console.error('Error updating objective in Turso:', error);
+    throw error;
+  }
+};
+
+// Get all objectives from all departments - for AI Chat
+export const getAllObjectivesWithValues = async () => {
+  try {
+    // Get all objectives from all departments
+    const objectivesResult = await db.execute({
+      sql: `SELECT * FROM objectives ORDER BY department, order_index ASC, created_at DESC`
+    });
+    
+    const objectives = objectivesResult.rows;
+    
+    // Get values for each objective
+    const enrichedObjectives = await Promise.all(
+      objectives.map(async (objective) => {
+        const valuesResult = await db.execute({
+          sql: `SELECT * FROM objective_values WHERE objective_id = ? ORDER BY year, month`,
+          args: [objective.id]
+        });
+        
+        // Calculate derived values
+        const currentDate = new Date();
+        const values = valuesResult.rows;
+        
+        // Calculate current value based on objective type
+        const currentYear = currentDate.getFullYear();
+        const currentYearValues = values.filter((v: any) => Number(v.year) === currentYear);
+        
+        let currentValue = 0;
+        switch (objective.type_objective) {
+          case 'Cumulativo':
+            currentValue = currentYearValues.reduce((sum: number, v: any) => sum + Number(v.value), 0);
+            break;
+          case 'Mantenimento':
+            if (currentYearValues.length > 0) {
+              currentValue = currentYearValues.reduce((sum: number, v: any) => sum + Number(v.value), 0) / currentYearValues.length;
+            }
+            break;
+          case 'Ultimo mese':
+            if (currentYearValues.length > 0) {
+              const sortedValues = currentYearValues.sort((a: any, b: any) => Number(b.month) - Number(a.month));
+              currentValue = Number(sortedValues[0]?.value) || 0;
+            }
+            break;
+        }
+        
+        // Calculate progress
+        const targetNumeric = Number(objective.target_numeric);
+        let progress = 0;
+        
+        if (objective.reverse_logic) {
+          // For reverse logic: lower is better
+          if (currentValue <= targetNumeric) {
+            progress = 100;
+          } else {
+            progress = Math.max(0, (targetNumeric / currentValue) * 100);
+          }
+        } else {
+          // Standard logic: higher is better
+          progress = targetNumeric > 0 ? (currentValue / targetNumeric) * 100 : 0;
+        }
+        
+        // Check if expired
+        const endDate = new Date(String(objective.end_date));
+        const isExpired = currentDate > endDate;
+        
+        // Calculate days until expiry
+        const daysUntilExpiry = Math.ceil((endDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // Determine status with unified logic
+        let status = '';
+        if (isExpired && progress >= 100) {
+          status = 'Completato';
+        } else if (isExpired && progress < 100) {
+          status = 'Non raggiunto';
+        } else if (!isExpired && progress >= 100) {
+          status = 'Raggiunto';
+        } else if (!isExpired && progress >= 70) {
+          status = 'In corso';
+        } else if (!isExpired && progress < 70 && (objective.type_objective === "Ultimo mese" || objective.type_objective === "Mantenimento")) {
+          status = 'In ritardo';
+        } else if (!isExpired && progress < 70 && objective.type_objective === "Cumulativo") {
+          status = 'Sotto target';
+        } else {
+          status = 'In ritardo'; // fallback
+        }
+        
+        // Calculate pro-rata roadmap fields (only for Cumulativo and not expired)
+        let expectedCurrentValue: number | null = null;
+        let isOnTrack: boolean | null = null;
+        let performanceVsExpected: number | null = null;
+        
+        if (objective.type_objective === 'Cumulativo' && !isExpired) {
+          const startDate = new Date(String(objective.start_date));
+          
+          // Calculate total days and elapsed days
+          const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+          const elapsedDays = Math.ceil((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+          
+          // Ensure elapsed days don't exceed total days
+          const safeDays = Math.max(0, Math.min(elapsedDays, totalDays));
+          
+          if (totalDays > 0) {
+            // Calculate expected value based on time elapsed
+            const timeElapsedRatio = safeDays / totalDays;
+            expectedCurrentValue = targetNumeric * timeElapsedRatio;
+            
+            // Determine if on track (consider reverse logic)
+            if (objective.reverse_logic) {
+              isOnTrack = currentValue <= expectedCurrentValue;
+            } else {
+              isOnTrack = currentValue >= expectedCurrentValue;
+            }
+            
+            // Calculate performance vs expected
+            if (expectedCurrentValue > 0) {
+              performanceVsExpected = (currentValue / expectedCurrentValue) * 100;
+            } else {
+              performanceVsExpected = currentValue === 0 ? 100 : 0;
+            }
+            
+            // Round to 2 decimal places
+            expectedCurrentValue = Math.round(expectedCurrentValue * 100) / 100;
+            performanceVsExpected = Math.round(performanceVsExpected * 100) / 100;
+          }
+        }
+        
+        return {
+          ...objective,
+          values: values,
+          currentValue: Math.round(currentValue * 100) / 100,
+          progress: Math.round(progress * 100) / 100,
+          isExpired,
+          daysUntilExpiry,
+          status,
+          // Pro-rata roadmap fields
+          expectedCurrentValue,
+          isOnTrack,
+          performanceVsExpected
+        };
+      })
+    );
+    
+    return enrichedObjectives;
+  } catch (error) {
+    console.error('Error fetching all objectives with values:', error);
+    throw error;
+  }
+};
+
+// Enhanced API function for AI with all calculated analytics - adapted for async
+export const getEnrichedObjectivesByDepartment = async (department: string) => {
+  try {
+    const objectives = await getObjectivesByDepartment(department);
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth() + 1;
+    const currentYear = currentDate.getFullYear();
+    
+    // Helper function to calculate health status
+    const getHealthStatus = (progressPercentage: number, expectedProgressPercentage: number) => {
+      const variance = progressPercentage - expectedProgressPercentage;
+      if (progressPercentage >= 100) return 'Exceeded';
+      if (variance > -10) return 'On Track';
+      if (variance > -25) return 'At Risk';
+      return 'Behind';
+    };
+    
+    // Helper function to calculate trend
+    const getTrend = (values: any[], objectiveType: string) => {
+      if (values.length < 2) return 'Stable';
+      
+      const sortedValues = values.sort((a, b) => Number(a.year) - Number(b.year) || Number(a.month) - Number(b.month));
+      const lastValue = Number(sortedValues[sortedValues.length - 1]?.value) || 0;
+      const previousValue = Number(sortedValues[sortedValues.length - 2]?.value) || 0;
+      
+      if (lastValue > previousValue) return 'Improving';
+      if (lastValue < previousValue) return 'Declining';
+      return 'Stable';
+    };
+    
+    // Helper function to calculate current value based on objective type
+    const calculateCurrentValue = (objective: any) => {
+      const values = objective.values.filter((v: any) => Number(v.year) === currentYear);
+      
+      switch (objective.type_objective) {
+        case 'Cumulativo':
+          return values.reduce((sum: number, v: any) => sum + Number(v.value), 0);
+        case 'Mantenimento':
+          if (values.length === 0) return 0;
+          return values.reduce((sum: number, v: any) => sum + Number(v.value), 0) / values.length;
+        case 'Ultimo mese':
+          if (values.length === 0) return 0;
+          const sortedValues = values.sort((a: any, b: any) => Number(b.month) - Number(a.month));
+          return Number(sortedValues[0]?.value) || 0;
+        default:
+          return 0;
+      }
+    };
+    
+    // Calculate enriched data for each objective
+    const enrichedObjectives = objectives.map(objective => {
+      const currentValue = calculateCurrentValue(objective);
+      const progressPercentage = Number(objective.target_numeric) > 0 ? (currentValue / Number(objective.target_numeric)) * 100 : 0;
+      
+      // Calculate time elapsed percentage
+      const startDate = new Date(String(objective.start_date));
+      const endDate = new Date(String(objective.end_date));
+      const totalDays = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+      const elapsedDays = (currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+      const timeElapsedPercentage = Math.max(0, Math.min(100, (elapsedDays / totalDays) * 100));
+      
+      // Expected progress (linear)
+      const expectedProgressPercentage = timeElapsedPercentage;
+      
+      // Variance
+      const variancePercentage = progressPercentage - expectedProgressPercentage;
+      
+      // Health status
+      const healthStatus = getHealthStatus(progressPercentage, expectedProgressPercentage);
+      
+      // Trend
+      const trend = getTrend(objective.values, String(objective.type_objective));
+      
+      // Last update
+      const lastUpdate = objective.values
+        .filter((v: any) => Number(v.year) === currentYear)
+        .sort((a: any, b: any) => Number(b.month) - Number(a.month))[0];
+      
+      const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+                         'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+      
+      const lastUpdateFormatted = lastUpdate ? {
+        month: monthNames[Number(lastUpdate.month) - 1],
+        value: Number(lastUpdate.value)
+      } : null;
+      
+      // Monthly values formatted
+      const monthlyValues = objective.values
+        .filter((v: any) => Number(v.year) === currentYear)
+        .map((v: any) => ({
+          month: monthNames[Number(v.month) - 1],
+          value: Number(v.value)
+        }));
+      
+      return {
+        // Basic identifiers
+        id: objective.id,
+        objectiveName: objective.objective_name || String(objective.objective_smart).substring(0, 50) + (String(objective.objective_smart).length > 50 ? '...' : ''),
+        objectiveSmartDescription: objective.objective_smart,
+        department: objective.department,
+        objectiveType: objective.type_objective,
+        numberFormat: objective.number_format || 'number',
+        
+        // Target data
+        targetValue: Number(objective.target_numeric),
+        startDate: objective.start_date,
+        endDate: objective.end_date,
+        
+        // Performance data
+        currentValue,
+        progressPercentage: Math.round(progressPercentage * 10) / 10,
+        lastUpdate: lastUpdateFormatted,
+        
+        // Analytics data
+        expectedProgressPercentage: Math.round(expectedProgressPercentage * 10) / 10,
+        variancePercentage: Math.round(variancePercentage * 10) / 10,
+        healthStatus,
+        trend,
+        timeElapsedPercentage: Math.round(timeElapsedPercentage * 10) / 10,
+        
+        // Raw data
+        monthlyValues
+      };
+    });
+    
+    // Calculate department summary
+    const totalObjectives = enrichedObjectives.length;
+    const overallProgressAverage = totalObjectives > 0 
+      ? enrichedObjectives.reduce((sum, obj) => sum + obj.progressPercentage, 0) / totalObjectives
+      : 0;
+    
+    const objectivesByHealthStatus = enrichedObjectives.reduce((acc, obj) => {
+      acc[obj.healthStatus] = (acc[obj.healthStatus] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    // Ensure all health statuses are represented
+    ['Exceeded', 'On Track', 'At Risk', 'Behind'].forEach(status => {
+      if (!objectivesByHealthStatus[status]) {
+        objectivesByHealthStatus[status] = 0;
+      }
+    });
+    
+    const topPerformer = enrichedObjectives.reduce((best, current) => 
+      current.progressPercentage > (best?.progressPercentage || -1) ? current : best, null);
+    
+    const worstPerformer = enrichedObjectives.reduce((worst, current) => 
+      current.progressPercentage < (worst?.progressPercentage || 999) ? current : worst, null);
+    
+    const countByType = enrichedObjectives.reduce((acc, obj) => {
+      acc[obj.objectiveType] = (acc[obj.objectiveType] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    // Ensure all types are represented
+    ['Cumulativo', 'Mantenimento', 'Ultimo mese'].forEach(type => {
+      if (!countByType[type]) {
+        countByType[type] = 0;
+      }
+    });
+    
+    const departmentSummary = {
+      departmentName: department,
+      totalObjectives,
+      overallProgressAverage: Math.round(overallProgressAverage * 10) / 10,
+      objectivesByHealthStatus,
+      topPerformer: topPerformer ? {
+        name: topPerformer.objectiveName,
+        progressPercentage: topPerformer.progressPercentage
+      } : null,
+      worstPerformer: worstPerformer ? {
+        name: worstPerformer.objectiveName,
+        progressPercentage: worstPerformer.progressPercentage
+      } : null,
+      countByType
+    };
+    
+    return {
+      departmentSummary,
+      objectives: enrichedObjectives
+    };
+  } catch (error) {
+    console.error('Error getting enriched objectives:', error);
+    throw error;
+  }
+};
