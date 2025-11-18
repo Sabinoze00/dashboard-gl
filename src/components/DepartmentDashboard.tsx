@@ -39,6 +39,7 @@ export default function DepartmentDashboard({ department }: DepartmentDashboardP
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<'overview' | 'grid'>('overview');
+  const [activeTab, setActiveTab] = useState<'active' | 'archive'>('active');
   const [showAddForm, setShowAddForm] = useState(false);
   const [showBulkForm, setShowBulkForm] = useState(false);
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
@@ -184,8 +185,16 @@ export default function DepartmentDashboard({ department }: DepartmentDashboardP
     fetchObjectives();
   }, [fetchObjectives]);
 
+  // Filter objectives based on active/archive tab
+  const today = new Date();
+  const activeObjectives = objectives.filter(obj => new Date(obj.end_date) >= today);
+  const archivedObjectives = objectives.filter(obj => new Date(obj.end_date) < today);
+
+  // Select objectives based on active tab
+  const tabFilteredObjectives = activeTab === 'active' ? activeObjectives : archivedObjectives;
+
   // Filter objectives based on selected period
-  const filteredObjectives = filterObjectivesByPeriod(objectives, selectedPeriod);
+  const filteredObjectives = filterObjectivesByPeriod(tabFilteredObjectives, selectedPeriod);
 
   const getDepartmentColor = () => {
     const colors = {
@@ -273,26 +282,31 @@ export default function DepartmentDashboard({ department }: DepartmentDashboardP
             </div>
             
             <div className="flex space-x-3">
-              <button
-                onClick={() => setShowAddForm(true)}
-                className="px-5 py-2.5 bg-brand-primary text-white rounded-xl text-sm font-semibold hover:bg-pink-600 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center space-x-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                <span>Aggiungi Obiettivo</span>
-              </button>
-              
-              <button
-                onClick={() => setShowBulkForm(true)}
-                className="px-5 py-2.5 bg-brand-secondary text-white rounded-xl text-sm font-semibold hover:bg-orange-600 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center space-x-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-                </svg>
-                <span>Crea in Blocco</span>
-              </button>
-              
+              {/* Hide add buttons in archive mode */}
+              {activeTab === 'active' && (
+                <>
+                  <button
+                    onClick={() => setShowAddForm(true)}
+                    className="px-5 py-2.5 bg-brand-primary text-white rounded-xl text-sm font-semibold hover:bg-pink-600 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center space-x-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Aggiungi Obiettivo</span>
+                  </button>
+
+                  <button
+                    onClick={() => setShowBulkForm(true)}
+                    className="px-5 py-2.5 bg-brand-secondary text-white rounded-xl text-sm font-semibold hover:bg-orange-600 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center space-x-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                    </svg>
+                    <span>Crea in Blocco</span>
+                  </button>
+                </>
+              )}
+
               <button
                 onClick={() => setActiveView('overview')}
                 className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
@@ -318,34 +332,115 @@ export default function DepartmentDashboard({ department }: DepartmentDashboardP
         </div>
       </header>
 
+      {/* Active/Archive Tabs */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          <div className="flex space-x-8">
+            <button
+              onClick={() => setActiveTab('active')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'active'
+                  ? 'border-brand-primary text-brand-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Obiettivi Attivi</span>
+                <span className="bg-brand-primary text-white text-xs px-2 py-0.5 rounded-full">
+                  {activeObjectives.length}
+                </span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('archive')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'archive'
+                  ? 'border-brand-primary text-brand-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                </svg>
+                <span>Archivio</span>
+                <span className="bg-gray-400 text-white text-xs px-2 py-0.5 rounded-full">
+                  {archivedObjectives.length}
+                </span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+        {/* Archive Info Banner */}
+        {activeTab === 'archive' && (
+          <div className="mb-6 bg-gray-50 border border-gray-200 rounded-xl p-4">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-gray-900">Modalità Archivio - Sola Lettura</h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  Stai visualizzando obiettivi scaduti (data fine passata). Le modifiche sono disabilitate per preservare lo storico.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {activeView === 'overview' ? (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            {/* Score Cards */}
+          <>
+            {/* Score Cards - Draggable only in active mode */}
             {filteredObjectives.length > 0 && (
               <section className="mb-12">
                 <div className="flex items-center justify-between mb-8">
                   <h2 className="text-2xl font-bold text-gray-900">Score Cards</h2>
-                  <div className="text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
-                    🔄 Trascina le card per riordinarle
-                  </div>
+                  {activeTab === 'active' && (
+                    <div className="text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
+                      🔄 Trascina le card per riordinarle
+                    </div>
+                  )}
                 </div>
-                <SortableContext items={filteredObjectives.map(obj => obj.id.toString())} strategy={rectSortingStrategy}>
+                {activeTab === 'active' ? (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext items={filteredObjectives.map(obj => obj.id.toString())} strategy={rectSortingStrategy}>
+                      <div className="grid grid-cols-fluid-320 gap-8 max-w-none">
+                        {filteredObjectives.map((objective) => (
+                          <DraggableScoreCard
+                            key={objective.id}
+                            objective={objective}
+                            onObjectiveUpdate={handleObjectiveUpdate}
+                            selectedPeriod={selectedPeriod}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                ) : (
                   <div className="grid grid-cols-fluid-320 gap-8 max-w-none">
                     {filteredObjectives.map((objective) => (
-                      <DraggableScoreCard
+                      <ScoreCard
                         key={objective.id}
                         objective={objective}
                         onObjectiveUpdate={handleObjectiveUpdate}
                         selectedPeriod={selectedPeriod}
+                        readOnly={true}
                       />
                     ))}
                   </div>
-                </SortableContext>
+                )}
               </section>
             )}
 
@@ -360,10 +455,12 @@ export default function DepartmentDashboard({ department }: DepartmentDashboardP
                 </div>
               </section>
             )}
-          </DndContext>
+          </>
         ) : (
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Griglia Editing Avanzata</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              {activeTab === 'archive' ? 'Griglia Archivio (Sola Lettura)' : 'Griglia Editing Avanzata'}
+            </h2>
             <AdvancedGrid
               objectives={filteredObjectives}
               department={department}
@@ -371,6 +468,7 @@ export default function DepartmentDashboard({ department }: DepartmentDashboardP
               onObjectiveUpdate={handleObjectiveUpdate}
               onObjectiveDelete={handleObjectiveDelete}
               onRefresh={fetchObjectives}
+              readOnly={activeTab === 'archive'}
             />
           </section>
         )}

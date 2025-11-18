@@ -11,6 +11,7 @@ interface AdvancedGridProps {
   onObjectiveUpdate: (objectiveId: number, updates: { objective_smart?: string; type_objective?: string; target_numeric?: number; objective_name?: string; number_format?: string; start_date?: string; end_date?: string }) => void;
   onObjectiveDelete: (objectiveId: number) => void;
   onRefresh?: () => void;
+  readOnly?: boolean;
 }
 
 // type EditMode = 'none' | 'single';
@@ -26,12 +27,13 @@ type EditingCell = {
   month?: number;
 } | null;
 
-export default function AdvancedGrid({ 
-  objectives, 
-  onValueUpdate, 
+export default function AdvancedGrid({
+  objectives,
+  onValueUpdate,
   onObjectiveUpdate,
   onObjectiveDelete,
-  onRefresh 
+  onRefresh,
+  readOnly = false
 }: AdvancedGridProps) {
   const [editingCell, setEditingCell] = useState<EditingCell>(null);
   const [editValue, setEditValue] = useState('');
@@ -160,6 +162,7 @@ export default function AdvancedGrid({
 
   // Handle double click for editing
   const handleDoubleClick = (objectiveId: number, field: string, month?: number) => {
+    if (readOnly) return; // Disable editing in read-only mode
     setEditingCell({ objectiveId, field, month });
     if (field === 'month' && month) {
       setEditValue(getMonthValue(objectives.find(o => o.id === objectiveId)!, month).toString());
@@ -179,6 +182,7 @@ export default function AdvancedGrid({
 
   // Handle automatic paste on selected range
   const handlePasteToSelection = async (pastedText: string) => {
+    if (readOnly) return; // Disable paste in read-only mode
     if (!selectedRange || !pastedText.trim()) return;
 
     setIsUpdating(true);
@@ -480,7 +484,7 @@ export default function AdvancedGrid({
       )}
 
       {/* Bulk Actions Bar */}
-      {showBulkActions && (
+      {!readOnly && showBulkActions && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="bg-blue-100 rounded-full p-2">
@@ -519,9 +523,14 @@ export default function AdvancedGrid({
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Griglia Editing Avanzata</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              {readOnly ? 'Griglia Archivio (Sola Lettura)' : 'Griglia Editing Avanzata'}
+            </h3>
             <p className="text-brand-text">
-              Doppio click per modificare • Seleziona celle e premi Ctrl+V per incollare da Excel
+              {readOnly
+                ? 'Visualizzazione dati storici - Le modifiche sono disabilitate'
+                : 'Doppio click per modificare • Seleziona celle e premi Ctrl+V per incollare da Excel'
+              }
             </p>
           </div>
           
@@ -549,17 +558,21 @@ export default function AdvancedGrid({
           <table className="w-full divide-y divide-gray-200 table-fixed" style={{minWidth: '2300px', width: '100%'}}>
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style={{width: '50px'}}>
-                  <input
-                    type="checkbox"
-                    checked={selectedObjectives.size === objectives.length && objectives.length > 0}
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
-                  />
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Azioni
-                </th>
+                {!readOnly && (
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style={{width: '50px'}}>
+                    <input
+                      type="checkbox"
+                      checked={selectedObjectives.size === objectives.length && objectives.length > 0}
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                    />
+                  </th>
+                )}
+                {!readOnly && (
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Azioni
+                  </th>
+                )}
                 <th 
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 relative"
                   style={{width: `${objectiveColumnWidth}px`}}
@@ -602,27 +615,31 @@ export default function AdvancedGrid({
               {objectives.map((objective, index) => (
                 <tr key={objective.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                   {/* Selection Checkbox */}
-                  <td className="px-4 py-2 text-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedObjectives.has(objective.id)}
-                      onChange={(e) => handleObjectiveSelect(objective.id, e.target.checked)}
-                      className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
-                    />
-                  </td>
+                  {!readOnly && (
+                    <td className="px-4 py-2 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedObjectives.has(objective.id)}
+                        onChange={(e) => handleObjectiveSelect(objective.id, e.target.checked)}
+                        className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                      />
+                    </td>
+                  )}
                   {/* Actions */}
-                  <td className="px-4 py-2">
-                    <button
-                      onClick={() => {
-                        if (confirm('Sei sicuro di voler eliminare questo obiettivo?')) {
-                          onObjectiveDelete(objective.id);
-                        }
-                      }}
-                      className="text-red-600 hover:text-red-800 text-sm font-medium"
-                    >
-                      🗑️ Elimina
-                    </button>
-                  </td>
+                  {!readOnly && (
+                    <td className="px-4 py-2">
+                      <button
+                        onClick={() => {
+                          if (confirm('Sei sicuro di voler eliminare questo obiettivo?')) {
+                            onObjectiveDelete(objective.id);
+                          }
+                        }}
+                        className="text-red-600 hover:text-red-800 text-sm font-medium"
+                      >
+                        🗑️ Elimina
+                      </button>
+                    </td>
+                  )}
 
                   {/* Objective Smart */}
                   <td 

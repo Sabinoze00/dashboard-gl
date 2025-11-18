@@ -10,9 +10,10 @@ interface ScoreCardProps {
   objective: ObjectiveWithValues;
   onObjectiveUpdate?: (objectiveId: number, updates: { objective_smart?: string; target_numeric?: number; objective_name?: string; reverse_logic?: boolean }) => void;
   selectedPeriod?: PeriodSelection;
+  readOnly?: boolean;
 }
 
-export default function ScoreCard({ objective, onObjectiveUpdate, selectedPeriod }: ScoreCardProps) {
+export default function ScoreCard({ objective, onObjectiveUpdate, selectedPeriod, readOnly = false }: ScoreCardProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingTarget, setIsEditingTarget] = useState(false);
   const [editTitle, setEditTitle] = useState(objective.objective_name || objective.objective_smart);
@@ -76,6 +77,7 @@ export default function ScoreCard({ objective, onObjectiveUpdate, selectedPeriod
 
   // Handle double click detection
   const handleDoubleClick = (field: 'title' | 'target') => {
+    if (readOnly) return; // Disable editing in read-only mode
     if (field === 'title') {
       setIsEditingTitle(true);
       setEditTitle(objective.objective_name || objective.objective_smart);
@@ -86,9 +88,10 @@ export default function ScoreCard({ objective, onObjectiveUpdate, selectedPeriod
   };
 
   const handleClick = (field: 'title' | 'target') => {
+    if (readOnly) return; // Disable editing in read-only mode
     const currentTime = Date.now();
     const lastClick = lastClickTime[field] || 0;
-    
+
     if (currentTime - lastClick < 500) { // Double click detected
       handleDoubleClick(field);
       setLastClickTime({ ...lastClickTime, [field]: 0 });
@@ -184,10 +187,12 @@ export default function ScoreCard({ objective, onObjectiveUpdate, selectedPeriod
                 </div>
               </div>
             ) : (
-              <h3 
+              <h3
                 onClick={() => handleClick('title')}
-                className="text-lg font-semibold text-gray-900 mb-3 line-clamp-2 group-hover:text-brand-primary transition-colors duration-200 cursor-pointer hover:bg-gray-50 p-2 rounded-lg" 
-                title={`${objective.objective_smart} (Doppio click per modificare)`}
+                className={`text-lg font-semibold text-gray-900 mb-3 line-clamp-2 p-2 rounded-lg transition-colors duration-200 ${
+                  readOnly ? '' : 'group-hover:text-brand-primary cursor-pointer hover:bg-gray-50'
+                }`}
+                title={readOnly ? objective.objective_smart : `${objective.objective_smart} (Doppio click per modificare)`}
               >
                 {objective.objective_name || objective.objective_smart.substring(0, 50) + (objective.objective_smart.length > 50 ? '...' : '')}
               </h3>
@@ -269,12 +274,12 @@ export default function ScoreCard({ objective, onObjectiveUpdate, selectedPeriod
                 </div>
               </div>
             ) : (
-              <div 
+              <div
                 onClick={() => handleClick('target')}
-                className={`font-bold text-gray-700 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors ${
+                className={`font-bold text-gray-700 p-2 rounded transition-colors ${
                   objective.type_objective === 'Cumulativo' ? 'text-3xl' : 'text-4xl'
-                }`}
-                title="Doppio click per modificare"
+                } ${readOnly ? '' : 'cursor-pointer hover:bg-gray-50'}`}
+                title={readOnly ? '' : 'Doppio click per modificare'}
               >
                 {formatValue(targetValue)}
               </div>
