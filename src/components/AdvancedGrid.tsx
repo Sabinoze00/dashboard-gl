@@ -555,7 +555,7 @@ export default function AdvancedGrid({
           tabIndex={0} 
           style={{outline: 'none'}}
         >
-          <table className="w-full divide-y divide-gray-200 table-fixed" style={{minWidth: '2300px', width: '100%'}}>
+          <table className="w-full divide-y divide-gray-200 table-fixed" style={{minWidth: '1900px', width: '100%'}}>
             <thead className="bg-gray-50">
               <tr>
                 {!readOnly && (
@@ -586,26 +586,26 @@ export default function AdvancedGrid({
                     />
                   </div>
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style={{width: '120px', minWidth: '120px'}}>
                   Tipo
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style={{width: '120px', minWidth: '120px'}}>
                   Target
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style={{width: '120px', minWidth: '120px'}}>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style={{width: '110px', minWidth: '110px'}}>
                   Formato
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style={{width: '130px', minWidth: '130px'}}>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style={{width: '120px', minWidth: '120px'}}>
                   Data Inizio
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style={{width: '130px', minWidth: '130px'}}>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style={{width: '120px', minWidth: '120px'}}>
                   Data Fine
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style={{width: '100px', minWidth: '100px'}}>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style={{width: '90px', minWidth: '90px'}}>
                   Logica
                 </th>
                 {months.map((month) => (
-                  <th key={month} className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style={{width: '120px', minWidth: '120px'}}>
+                  <th key={month} className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style={{width: '90px', minWidth: '90px'}}>
                     {month}
                   </th>
                 ))}
@@ -642,8 +642,8 @@ export default function AdvancedGrid({
                   )}
 
                   {/* Objective Smart */}
-                  <td 
-                    className={`px-6 py-2 sticky left-0 bg-inherit z-10 ${isCellSelected(index, 0) ? 'bg-brand-primary bg-opacity-20 border-2 border-brand-primary' : ''}`}
+                  <td
+                    className={`px-4 py-2 sticky left-0 bg-inherit z-10 ${isCellSelected(index, 0) ? 'bg-brand-primary bg-opacity-20 border-2 border-brand-primary' : ''}`}
                     style={{width: `${objectiveColumnWidth}px`}}
                   >
                     {editingCell?.objectiveId === objective.id && editingCell?.field === 'objective_smart' ? (
@@ -686,7 +686,7 @@ export default function AdvancedGrid({
                   </td>
 
                   {/* Type Objective */}
-                  <td className={`px-6 py-2 text-center ${isCellSelected(index, 1) ? 'bg-brand-primary bg-opacity-20 border-2 border-brand-primary' : ''}`}>
+                  <td className={`px-4 py-2 text-center ${isCellSelected(index, 1) ? 'bg-brand-primary bg-opacity-20 border-2 border-brand-primary' : ''}`}>
                     {editingCell?.objectiveId === objective.id && editingCell?.field === 'type_objective' ? (
                       <div className="flex items-center space-x-2">
                         <select
@@ -723,7 +723,7 @@ export default function AdvancedGrid({
                   </td>
 
                   {/* Target Numeric */}
-                  <td className={`px-6 py-2 text-center ${isCellSelected(index, 2) ? 'bg-brand-primary bg-opacity-20 border-2 border-brand-primary' : ''}`}>
+                  <td className={`px-4 py-2 text-center ${isCellSelected(index, 2) ? 'bg-brand-primary bg-opacity-20 border-2 border-brand-primary' : ''}`}>
                     {editingCell?.objectiveId === objective.id && editingCell?.field === 'target_numeric' ? (
                       <div className="flex items-center space-x-2">
                         <input
@@ -753,7 +753,7 @@ export default function AdvancedGrid({
                   </td>
 
                   {/* Number Format */}
-                  <td className={`px-6 py-2 text-center ${isCellSelected(index, 3) ? 'bg-brand-primary bg-opacity-20 border-2 border-brand-primary' : ''}`}>
+                  <td className={`px-4 py-2 text-center ${isCellSelected(index, 3) ? 'bg-brand-primary bg-opacity-20 border-2 border-brand-primary' : ''}`}>
                     {editingCell?.objectiveId === objective.id && editingCell?.field === 'number_format' ? (
                       <div className="flex items-center space-x-2">
                         <select
@@ -784,7 +784,7 @@ export default function AdvancedGrid({
                   </td>
 
                   {/* Start Date */}
-                  <td className={`px-6 py-2 text-center ${isCellSelected(index, 4) ? 'bg-brand-primary bg-opacity-20 border-2 border-brand-primary' : ''}`}>
+                  <td className={`px-4 py-2 text-center ${isCellSelected(index, 4) ? 'bg-brand-primary bg-opacity-20 border-2 border-brand-primary' : ''}`}>
                     {editingCell?.objectiveId === objective.id && editingCell?.field === 'start_date' ? (
                       <div className="flex items-center space-x-2">
                         <input
@@ -814,7 +814,7 @@ export default function AdvancedGrid({
                   </td>
 
                   {/* End Date */}
-                  <td className={`px-6 py-2 text-center ${isCellSelected(index, 5) ? 'bg-brand-primary bg-opacity-20 border-2 border-brand-primary' : ''}`}>
+                  <td className={`px-4 py-2 text-center ${isCellSelected(index, 5) ? 'bg-brand-primary bg-opacity-20 border-2 border-brand-primary' : ''}`}>
                     {editingCell?.objectiveId === objective.id && editingCell?.field === 'end_date' ? (
                       <div className="flex items-center space-x-2">
                         <input
@@ -844,7 +844,7 @@ export default function AdvancedGrid({
                   </td>
 
                   {/* Reverse Logic */}
-                  <td className={`px-6 py-2 text-center ${isCellSelected(index, 8) ? 'bg-brand-primary bg-opacity-20 border-2 border-brand-primary' : ''}`}>
+                  <td className={`px-4 py-2 text-center ${isCellSelected(index, 8) ? 'bg-brand-primary bg-opacity-20 border-2 border-brand-primary' : ''}`}>
                     {editingCell?.objectiveId === objective.id && editingCell?.field === 'reverse_logic' ? (
                       <div className="flex items-center space-x-2">
                         <select
@@ -887,7 +887,7 @@ export default function AdvancedGrid({
                     const colIndex = 9 + monthIndex; // 0=checkbox, 1=actions, 2=title, 3=type, 4=target, 5=format, 6=start_date, 7=end_date, 8=reverse_logic, 9-20=months
                     
                     return (
-                      <td key={monthNumber} className={`px-4 py-2 text-center ${
+                      <td key={monthNumber} className={`px-3 py-2 text-center ${
                         isCurrentMonth ? 'bg-blue-50' : ''
                       } ${isCellSelected(index, colIndex) ? 'bg-brand-primary bg-opacity-20 border-2 border-brand-primary' : ''}`}>
                         {editingCell?.objectiveId === objective.id && editingCell?.field === 'month' && editingCell?.month === monthNumber ? (
