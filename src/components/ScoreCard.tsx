@@ -130,7 +130,7 @@ export default function ScoreCard({ objective, onObjectiveUpdate, selectedPeriod
   };
 
   return (
-    <div className={`bg-white rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 border-2 group h-[420px] flex flex-col ${
+    <div className={`bg-white rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 border-2 group h-[440px] flex flex-col ${
       statusInfo.borderColor
     }`}>
       {/* Status Badge */}
@@ -154,9 +154,9 @@ export default function ScoreCard({ objective, onObjectiveUpdate, selectedPeriod
         </div>
       ) : null}
 
-      <div className="p-8 flex-1 flex flex-col overflow-auto">
+      <div className="p-6 flex-1 flex flex-col overflow-auto">
         {/* Header */}
-        <div className="flex justify-between items-start mb-6">
+        <div className="flex justify-between items-start mb-4">
           <div className="flex-1">
             {isEditingTitle ? (
               <div className="mb-3">
@@ -210,39 +210,39 @@ export default function ScoreCard({ objective, onObjectiveUpdate, selectedPeriod
 
         {/* Progress Bar - Only for Cumulative objectives */}
         {objective.type_objective === 'Cumulativo' && (
-          <div className="mb-6">
-            <div className="flex justify-between text-base text-gray-700 mb-3">
+          <div className="mb-4">
+            <div className="flex justify-between text-sm text-gray-700 mb-2">
               <span className="font-medium">Progresso</span>
-              <span className="font-bold text-lg">{progress.toFixed(1)}%</span>
+              <span className="font-bold">{progress.toFixed(1)}%</span>
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-3">
-              <div 
-                className={`h-3 rounded-full transition-all duration-500 ${getProgressColor(progress, status)}`}
+            <div className="w-full bg-gray-100 rounded-full h-2.5">
+              <div
+                className={`h-2.5 rounded-full transition-all duration-500 ${getProgressColor(progress, status)}`}
                 style={{ width: `${Math.min(progress, 100)}%` }}
               />
             </div>
             {objective.reverse_logic && (
               <div className="text-xs text-gray-500 mt-1 italic">
-                ⬇️ Obiettivo inverso: migliore se sotto il target
+                ⬇️ Obiettivo inverso
               </div>
             )}
           </div>
         )}
 
         {/* Values */}
-        <div className="grid grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col justify-center">
-            <div className="text-sm text-brand-text mb-2 font-medium">
+            <div className="text-sm text-brand-text mb-1 font-medium">
               {getCurrentValueLabel()}
             </div>
             <div className={`font-bold text-gray-900 ${
-              objective.type_objective === 'Cumulativo' ? 'text-3xl' : 'text-4xl'
+              objective.type_objective === 'Cumulativo' ? 'text-2xl' : 'text-3xl'
             }`}>
               {formatValue(currentValue)}
             </div>
           </div>
           <div className="flex flex-col justify-center">
-            <div className="text-sm text-brand-text mb-2 font-medium">Target Finale</div>
+            <div className="text-sm text-brand-text mb-1 font-medium">Target Finale</div>
             {isEditingTarget ? (
               <div>
                 <input
@@ -250,7 +250,7 @@ export default function ScoreCard({ objective, onObjectiveUpdate, selectedPeriod
                   value={editTarget}
                   onChange={(e) => setEditTarget(e.target.value)}
                   className={`w-full px-2 py-1 font-bold border border-brand-primary rounded focus:outline-none focus:ring-2 focus:ring-brand-primary text-right ${
-                    objective.type_objective === 'Cumulativo' ? 'text-3xl' : 'text-4xl'
+                    objective.type_objective === 'Cumulativo' ? 'text-2xl' : 'text-3xl'
                   }`}
                   autoFocus
                   onKeyDown={(e) => {
@@ -277,7 +277,7 @@ export default function ScoreCard({ objective, onObjectiveUpdate, selectedPeriod
               <div
                 onClick={() => handleClick('target')}
                 className={`font-bold text-gray-700 p-2 rounded transition-colors ${
-                  objective.type_objective === 'Cumulativo' ? 'text-3xl' : 'text-4xl'
+                  objective.type_objective === 'Cumulativo' ? 'text-2xl' : 'text-3xl'
                 } ${readOnly ? '' : 'cursor-pointer hover:bg-gray-50'}`}
                 title={readOnly ? '' : 'Doppio click per modificare'}
               >
@@ -288,7 +288,7 @@ export default function ScoreCard({ objective, onObjectiveUpdate, selectedPeriod
         </div>
 
         {/* Date and Status Info */}
-        <div className="mb-4 pb-4 border-b border-gray-50 space-y-2">
+        <div className="mb-3 pb-3 border-b border-gray-50 space-y-1.5">
           <div className="flex justify-between items-center text-sm text-brand-text">
             <span>Ultimo aggiornamento:</span>
             <span className="font-semibold">
@@ -317,9 +317,9 @@ export default function ScoreCard({ objective, onObjectiveUpdate, selectedPeriod
 
         {/* Comparison */}
         <div className="">
-          <div className="flex justify-between items-center text-base">
+          <div className="flex justify-between items-center text-sm">
             <span className="text-brand-text font-medium">vs Target:</span>
-            <span className={`font-bold text-lg ${
+            <span className={`font-bold ${
               objective.reverse_logic
                 ? (currentValue <= targetValue ? 'text-green-600' : 'text-red-600')
                 : (currentValue >= targetValue ? 'text-green-600' : 'text-orange-600')
